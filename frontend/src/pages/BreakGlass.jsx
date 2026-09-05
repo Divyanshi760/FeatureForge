@@ -127,34 +127,26 @@ export default function BreakGlass() {
 
   // Sweep expired sessions into history, the way the backend sweep job would.
   useEffect(() => {
-    setSessions((cur) => {
-      const live = []
-      const swept = []
-      for (const s of cur) {
-        if (s.expiresAt.getTime() <= nowMs) swept.push(s)
-        else live.push(s)
-      }
-      if (swept.length) {
-        setHistory((h) => [
-          ...swept.map((s) => ({
-            id: s.id,
-            user: s.user,
-            flag: s.flag,
-            key: s.key,
-            env: s.env,
-            reason: s.reason,
-            durationMin: s.durationMin,
-            status: 'expired',
-            endedLabel: 'just now',
-            closedBy: 'auto-revoked at expiry',
-            changes: 0,
-          })),
-          ...h,
-        ])
-      }
-      return swept.length ? live : cur
-    })
-  }, [nowMs])
+    const swept = sessions.filter((s) => s.expiresAt.getTime() <= nowMs)
+    if (!swept.length) return
+    setSessions((cur) => cur.filter((s) => s.expiresAt.getTime() > nowMs))
+    setHistory((h) => [
+      ...swept.map((s) => ({
+        id: s.id,
+        user: s.user,
+        flag: s.flag,
+        key: s.key,
+        env: s.env,
+        reason: s.reason,
+        durationMin: s.durationMin,
+        status: 'expired',
+        endedLabel: 'just now',
+        closedBy: 'auto-revoked at expiry',
+        changes: 0,
+      })),
+      ...h,
+    ])
+  }, [nowMs, sessions])
 
   const activeCount = sessions.length
 
