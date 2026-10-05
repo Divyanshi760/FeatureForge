@@ -47,7 +47,7 @@ export default function Nav() {
 
         <div className="hidden items-center gap-3 md:flex">
           <Link
-            to="/dashboard"
+            to="/login"
             className="text-sm font-medium text-ink-soft transition-colors hover:text-ink"
           >
             Sign in
