@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import Landing from './pages/Landing'
+import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Flags from './pages/Flags'
 import FlagDetail from './pages/FlagDetail'
@@ -13,6 +14,7 @@ import Team from './pages/Team'
 import Placeholder from './pages/Placeholder'
 import DashboardLayout from './components/dashboard/DashboardLayout'
 import { NAV_ITEMS } from './components/dashboard/nav'
+
 
 // Dashboard routes that have a real page built. Everything else in the nav
 // falls back to a styled placeholder until its page lands.
@@ -32,6 +34,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
+      <Route path="/login" element={<Login />} />
       <Route element={<DashboardLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/flags" element={<Flags />} />
