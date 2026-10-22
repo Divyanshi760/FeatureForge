@@ -324,7 +324,7 @@ export default function Approvals() {
               ) : (
                 <div className="flex items-center gap-2.5 rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink-faint">
                   <ClockIcon className="h-4 w-4" />
-                  {selected.requestedBy === CURRENT_USER
+                  {selected.requestedBy === me
                     ? 'You opened this request, so you cannot approve it yourself. Waiting on another reviewer.'
                     : 'You have already reviewed this request. Waiting on another reviewer.'}
                 </div>
