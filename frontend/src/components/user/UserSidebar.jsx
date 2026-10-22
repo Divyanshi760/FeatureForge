@@ -1,6 +1,7 @@
 import { Link, NavLink } from 'react-router-dom'
 import { USER_NAV_SECTIONS } from './nav'
 import { BugIcon } from '../icons'
+import SidebarUser from '../SidebarUser'
 
 function Mark() {
   return (
@@ -67,15 +68,7 @@ export default function UserSidebar({ onNavigate }) {
         ))}
       </nav>
 
-      <div className="mx-3 flex items-center gap-3 rounded-xl border border-line bg-surface px-3 py-2.5">
-        <span className="grid h-9 w-9 place-items-center rounded-full bg-signal-blue/30 text-sm font-semibold text-signal-blue">
-          RS
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-ink">Riya Sharma</p>
-          <p className="truncate text-xs text-ink-faint">User</p>
-        </div>
-      </div>
+      <SidebarUser accentClass="bg-signal-blue/30 text-signal-blue" />
     </div>
   )
 }

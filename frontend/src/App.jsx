@@ -17,6 +17,7 @@ import DeveloperManagement from './pages/DeveloperManagement'
 import ApprovalQueue from './pages/ApprovalQueue'
 import Placeholder from './pages/Placeholder'
 import DashboardLayout from './components/dashboard/DashboardLayout'
+import ProtectedRoute from './components/ProtectedRoute'
 import { NAV_ITEMS } from './components/dashboard/nav'
 
 // Developer portal
@@ -58,43 +59,49 @@ export default function App() {
       <Route path="/register" element={<Register />} />
 
       {/* Admin dashboard */}
-      <Route element={<DashboardLayout />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/flags" element={<Flags />} />
-        <Route path="/flags/:key" element={<FlagDetail />} />
-        <Route path="/approvals" element={<Approvals />} />
-        <Route path="/audit" element={<Audit />} />
-        <Route path="/break-glass" element={<BreakGlass />} />
-        <Route path="/experiments" element={<Experiments />} />
-        <Route path="/rollouts" element={<Rollouts />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/team" element={<Team />} />
-        <Route path="/issues" element={<IssuesManagement />} />
-        <Route path="/developers-mgmt" element={<DeveloperManagement />} />
-        <Route path="/approval-queue" element={<ApprovalQueue />} />
-        {NAV_ITEMS.filter((i) => !BUILT[i.to]).map((i) => (
-          <Route
-            key={i.to}
-            path={i.to}
-            element={<Placeholder title={i.label} icon={i.icon} />}
-          />
-        ))}
+      <Route element={<ProtectedRoute allow={['admin']} />}>
+        <Route element={<DashboardLayout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/flags" element={<Flags />} />
+          <Route path="/flags/:key" element={<FlagDetail />} />
+          <Route path="/approvals" element={<Approvals />} />
+          <Route path="/audit" element={<Audit />} />
+          <Route path="/break-glass" element={<BreakGlass />} />
+          <Route path="/experiments" element={<Experiments />} />
+          <Route path="/rollouts" element={<Rollouts />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/team" element={<Team />} />
+          <Route path="/issues" element={<IssuesManagement />} />
+          <Route path="/developers-mgmt" element={<DeveloperManagement />} />
+          <Route path="/approval-queue" element={<ApprovalQueue />} />
+          {NAV_ITEMS.filter((i) => !BUILT[i.to]).map((i) => (
+            <Route
+              key={i.to}
+              path={i.to}
+              element={<Placeholder title={i.label} icon={i.icon} />}
+            />
+          ))}
+        </Route>
       </Route>
 
       {/* Developer portal */}
-      <Route element={<DeveloperLayout />}>
-        <Route path="/developer" element={<DeveloperDashboard />} />
-        <Route path="/developer/available" element={<AvailableIssues />} />
-        <Route path="/developer/my-issues" element={<DevMyIssues />} />
-        <Route path="/developer/status" element={<DevProfile />} />
-        <Route path="/developer/profile" element={<DevProfile />} />
+      <Route element={<ProtectedRoute allow={['developer']} />}>
+        <Route element={<DeveloperLayout />}>
+          <Route path="/developer" element={<DeveloperDashboard />} />
+          <Route path="/developer/available" element={<AvailableIssues />} />
+          <Route path="/developer/my-issues" element={<DevMyIssues />} />
+          <Route path="/developer/status" element={<DevProfile />} />
+          <Route path="/developer/profile" element={<DevProfile />} />
+        </Route>
       </Route>
 
       {/* User portal */}
-      <Route element={<UserLayout />}>
-        <Route path="/user" element={<UserDashboard />} />
-        <Route path="/user/report" element={<ReportIssue />} />
-        <Route path="/user/my-reports" element={<UserMyReports />} />
+      <Route element={<ProtectedRoute allow={['user']} />}>
+        <Route element={<UserLayout />}>
+          <Route path="/user" element={<UserDashboard />} />
+          <Route path="/user/report" element={<ReportIssue />} />
+          <Route path="/user/my-reports" element={<UserMyReports />} />
+        </Route>
       </Route>
     </Routes>
   )

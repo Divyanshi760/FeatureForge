@@ -1,5 +1,6 @@
 import { Link, NavLink } from 'react-router-dom'
 import { NAV_SECTIONS } from './nav'
+import SidebarUser from '../SidebarUser'
 
 function Mark() {
   return (
@@ -76,15 +77,7 @@ export default function Sidebar({ onNavigate }) {
         ))}
       </nav>
 
-      <div className="mx-3 flex items-center gap-3 rounded-xl border border-line bg-surface px-3 py-2.5">
-        <span className="grid h-9 w-9 place-items-center rounded-full bg-ink text-sm font-semibold text-surface">
-          XY
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-ink">xyz</p>
-          <p className="truncate text-xs text-ink-faint">Maintainer</p>
-        </div>
-      </div>
+      <SidebarUser accentClass="bg-ink text-surface" />
     </div>
   )
 }
