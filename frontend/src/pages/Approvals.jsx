@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ShieldIcon,
@@ -7,7 +7,9 @@ import {
   ClockIcon,
   ArrowIcon,
 } from '../components/icons'
-import { CHANGE_REQUESTS, CURRENT_USER } from '../data/approvals'
+import { api } from '../lib/api'
+import { useAuth } from '../context/AuthContext'
+import { Loading, ErrorState } from '../components/AsyncState'
 import { TYPE_BADGE } from '../data/flags'
 
 const TABS = ['Pending', 'Approved', 'Rejected', 'All']
@@ -69,10 +71,29 @@ function DiffRow({ field, before, after }) {
 /* -------------------------------- page -------------------------------- */
 
 export default function Approvals() {
-  const [requests, setRequests] = useState(CHANGE_REQUESTS)
+  const { user } = useAuth()
+  const me = user?.email
+  const [requests, setRequests] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [tab, setTab] = useState('Pending')
-  const [selectedId, setSelectedId] = useState(CHANGE_REQUESTS[0].id)
+  const [selectedId, setSelectedId] = useState(null)
   const [toast, setToast] = useState(null)
+
+  const reload = () => {
+    setLoading(true)
+    setError(null)
+    api
+      .get('/approvals')
+      .then((data) => {
+        setRequests(data)
+        setSelectedId((id) => id ?? data[0]?.id ?? null)
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(reload, [])
 
   const counts = useMemo(() => {
     const c = { All: requests.length, Pending: 0, Approved: 0, Rejected: 0 }
@@ -88,26 +109,26 @@ export default function Approvals() {
   const selected = requests.find((r) => r.id === selectedId) || visible[0] || null
 
   const eligible = (r) =>
-    r.status === 'pending' &&
-    r.requestedBy !== CURRENT_USER &&
-    !r.approvals.includes(CURRENT_USER)
+    r.status === 'pending' && r.requestedBy !== me && !r.approvals.includes(me)
 
-  const resolve = (id, action) => {
-    setRequests((rs) =>
-      rs.map((r) => {
-        if (r.id !== id) return r
-        if (action === 'reject') return { ...r, status: 'rejected' }
-        const approvals = [...r.approvals, CURRENT_USER]
-        const status = approvals.length >= r.needed ? 'approved' : 'pending'
-        return { ...r, approvals, status }
-      }),
-    )
-    setToast(
-      action === 'reject'
-        ? `${id} rejected. The requester has been notified.`
-        : `Approval recorded on ${id}.`,
-    )
+  const resolve = async (id, action) => {
+    try {
+      const updated = await api.post(`/approvals/${id}/${action}`)
+      setRequests((rs) => rs.map((r) => (r.id === id ? updated : r)))
+      setToast(
+        action === 'reject'
+          ? `${id} rejected. The requester has been notified.`
+          : updated.status === 'approved'
+            ? `${id} approved and applied.`
+            : `Approval recorded on ${id}.`,
+      )
+    } catch (err) {
+      setToast(err.message)
+    }
   }
+
+  if (loading) return <Loading label="Loading approvals…" />
+  if (error) return <ErrorState message={error} onRetry={reload} />
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">

@@ -1,10 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { SearchIcon, PlusIcon, FlagIcon } from '../components/icons'
-import { FLAGS, TYPE_BADGE } from '../data/flags'
+import { SearchIcon, PlusIcon, FlagIcon, XIcon } from '../components/icons'
+import { TYPE_BADGE } from '../data/flags'
+import { api } from '../lib/api'
 
 const TYPES = ['All', 'Release', 'Experiment', 'Ops', 'Permission']
 const STATUSES = ['All', 'On', 'Off']
+const FLAG_TYPES = ['Release', 'Experiment', 'Ops', 'Permission']
 
 /* ------------------------------ helpers ------------------------------- */
 
@@ -24,18 +26,26 @@ function Pill({ active, onClick, children }) {
   )
 }
 
-function StatusPill({ on }) {
+function StatusToggle({ on, onChange }) {
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
-        on ? 'bg-[#e6f6ec] text-signal-green' : 'bg-canvas text-ink-faint'
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      onClick={(e) => {
+        e.stopPropagation()
+        onChange(!on)
+      }}
+      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+        on ? 'bg-signal-green' : 'bg-line-strong'
       }`}
     >
       <span
-        className={`h-1.5 w-1.5 rounded-full ${on ? 'bg-signal-green' : 'bg-ink-faint'}`}
+        className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-all ${
+          on ? 'left-[1.375rem]' : 'left-0.5'
+        }`}
       />
-      {on ? 'On' : 'Off'}
-    </span>
+    </button>
   )
 }
 
@@ -47,9 +57,40 @@ export default function Flags() {
   const [type, setType] = useState('All')
   const [status, setStatus] = useState('All')
 
+  const [flags, setFlags] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [feedback, setFeedback] = useState(null)
+
+  const [showCreate, setShowCreate] = useState(false)
+  const [form, setForm] = useState({ name: '', key: '', type: 'Release', rollout: 0 })
+  const [saving, setSaving] = useState(false)
+  const [formError, setFormError] = useState(null)
+
+  const reload = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      setFlags(await api.get('/flags'))
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    reload()
+  }, [])
+
+  const flash = (msg) => {
+    setFeedback(msg)
+    setTimeout(() => setFeedback(null), 4000)
+  }
+
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()
-    return FLAGS.filter((f) => {
+    return flags.filter((f) => {
       if (type !== 'All' && f.type !== type) return false
       if (status === 'On' && !f.on) return false
       if (status === 'Off' && f.on) return false
@@ -57,12 +98,79 @@ export default function Flags() {
         needle &&
         !f.name.toLowerCase().includes(needle) &&
         !f.key.toLowerCase().includes(needle) &&
-        !f.by.toLowerCase().includes(needle)
+        !(f.by || '').toLowerCase().includes(needle)
       )
         return false
       return true
     })
-  }, [q, type, status])
+  }, [flags, q, type, status])
+
+  const applyUpdate = (updated) =>
+    setFlags((prev) => prev.map((f) => (f.key === updated.key ? updated : f)))
+
+  const toggleFlag = async (f) => {
+    try {
+      const updated = await api.patch(`/flags/${f.key}/toggle`)
+      applyUpdate(updated)
+      flash(`${updated.name} switched ${updated.on ? 'on' : 'off'}`)
+    } catch (err) {
+      flash(err.message)
+    }
+  }
+
+  const commitRollout = async (f, value) => {
+    const next = Math.max(0, Math.min(100, Number(value) || 0))
+    if (next === f.rollout) return
+    try {
+      applyUpdate(await api.patch(`/flags/${f.key}/rollout`, { rollout: next }))
+      flash(`${f.name} rollout set to ${next}%`)
+    } catch (err) {
+      flash(err.message)
+    }
+  }
+
+  const createFlag = async (e) => {
+    e.preventDefault()
+    setFormError(null)
+    setSaving(true)
+    try {
+      const created = await api.post('/flags', {
+        ...form,
+        rollout: Number(form.rollout) || 0,
+        on: Number(form.rollout) > 0,
+      })
+      setFlags((prev) => [created, ...prev])
+      setShowCreate(false)
+      setForm({ name: '', key: '', type: 'Release', rollout: 0 })
+      flash(`Flag ${created.name} created`)
+    } catch (err) {
+      setFormError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-6xl">
+        <div className="card px-6 py-20 text-center text-ink-faint">Loading flags…</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-6xl">
+        <div className="card px-6 py-16 text-center">
+          <p className="font-medium text-ink">Could not load flags</p>
+          <p className="mt-1 text-sm text-ink-faint">{error}</p>
+          <button type="button" onClick={reload} className="btn-ghost mx-auto mt-6">
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -72,14 +180,20 @@ export default function Flags() {
           <p className="eyebrow">Checkout Platform · prod</p>
           <h1 className="display mt-2 text-3xl text-ink md:text-4xl">Flags</h1>
           <p className="mt-2 text-ink-soft">
-            {FLAGS.length} flags in this environment, evaluated in-process by the SDK.
+            {flags.length} flags in this environment, evaluated in-process by the SDK.
           </p>
         </div>
-        <button type="button" className="btn-accent py-2.5">
+        <button type="button" onClick={() => setShowCreate(true)} className="btn-accent py-2.5">
           <PlusIcon className="h-4 w-4" />
           Create flag
         </button>
       </div>
+
+      {feedback && (
+        <div className="rounded-2xl border border-[#cfe9d6] bg-[#eaf7ee] px-5 py-3 text-sm font-medium text-[#256b3a]">
+          {feedback}
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -129,9 +243,7 @@ export default function Flags() {
                   className="group cursor-pointer border-b border-line last:border-0 transition-colors hover:bg-surface"
                 >
                   <td className="px-6 py-4">
-                    <div className="font-medium text-ink group-hover:text-ink">
-                      {f.name}
-                    </div>
+                    <div className="font-medium text-ink group-hover:text-ink">{f.name}</div>
                     <div className="font-mono text-xs text-ink-faint">{f.key}</div>
                   </td>
                   <td className="px-6 py-4">
@@ -142,10 +254,10 @@ export default function Flags() {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <StatusPill on={f.on} />
+                    <StatusToggle on={f.on} onChange={() => toggleFlag(f)} />
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2.5" onClick={(e) => e.stopPropagation()}>
                       <div className="h-1.5 w-20 overflow-hidden rounded-full bg-canvas">
                         <div
                           className="h-full rounded-full"
@@ -157,9 +269,19 @@ export default function Flags() {
                           }}
                         />
                       </div>
-                      <span className="w-9 text-sm tabular-nums text-ink-soft">
-                        {f.rollout}%
-                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        defaultValue={f.rollout}
+                        key={`${f.key}-${f.rollout}`}
+                        onClick={(e) => e.stopPropagation()}
+                        onBlur={(e) => commitRollout(f, e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') e.currentTarget.blur()
+                        }}
+                        className="w-16 rounded-lg border border-line bg-panel px-2 py-1 text-right text-sm tabular-nums text-ink-soft focus:border-line-strong focus:outline-none"
+                      />
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-ink-soft">
@@ -186,8 +308,108 @@ export default function Flags() {
 
       {filtered.length > 0 && (
         <p className="px-1 text-sm text-ink-faint">
-          Showing {filtered.length} of {FLAGS.length} flags
+          Showing {filtered.length} of {flags.length} flags
         </p>
+      )}
+
+      {/* Create modal */}
+      {showCreate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-ink/30 backdrop-blur-sm" onClick={() => setShowCreate(false)} />
+          <form
+            onSubmit={createFlag}
+            className="relative w-full max-w-md rounded-2xl border border-line bg-panel p-6 shadow-2xl"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-semibold text-ink">Create flag</h2>
+                <p className="mt-1 text-sm text-ink-faint">
+                  Define a flag in this environment. Rollout starts held back until you ramp it.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCreate(false)}
+                className="grid h-8 w-8 place-items-center rounded-lg text-ink-faint hover:bg-surface hover:text-ink"
+              >
+                <XIcon className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-5 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-ink-soft">Name</label>
+                <input
+                  value={form.name}
+                  onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
+                  required
+                  placeholder="checkout-redesign"
+                  className="mt-1.5 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-line-strong focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-soft">Key</label>
+                <input
+                  value={form.key}
+                  onChange={(e) => setForm((s) => ({ ...s, key: e.target.value }))}
+                  required
+                  placeholder="checkout_redesign_v2"
+                  className="mt-1.5 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 font-mono text-sm text-ink placeholder:text-ink-faint focus:border-line-strong focus:outline-none"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-ink-soft">Type</label>
+                  <select
+                    value={form.type}
+                    onChange={(e) => setForm((s) => ({ ...s, type: e.target.value }))}
+                    className="mt-1.5 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-ink focus:border-line-strong focus:outline-none"
+                  >
+                    {FLAG_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-ink-soft">Rollout %</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={form.rollout}
+                    onChange={(e) => setForm((s) => ({ ...s, rollout: e.target.value }))}
+                    className="mt-1.5 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm tabular-nums text-ink focus:border-line-strong focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {formError && (
+              <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
+                {formError}
+              </p>
+            )}
+
+            <div className="mt-6 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowCreate(false)}
+                className="flex-1 rounded-xl border border-line py-2.5 text-sm font-medium text-ink-soft hover:bg-surface"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={saving}
+                className="btn-accent flex-1 justify-center py-2.5 disabled:opacity-40"
+              >
+                {saving ? 'Creating…' : 'Create flag'}
+              </button>
+            </div>
+          </form>
+        </div>
       )}
     </div>
   )

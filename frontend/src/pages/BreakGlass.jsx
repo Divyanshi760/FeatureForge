@@ -8,14 +8,9 @@ import {
   XIcon,
   BoltIcon,
 } from '../components/icons'
-import { FLAGS } from '../data/flags'
-import { CURRENT_USER } from '../data/approvals'
-import {
-  ACTIVE_SESSIONS,
-  PAST_SESSIONS,
-  DURATION_OPTIONS,
-  MAX_DURATION_MIN,
-} from '../data/breakglass'
+import { api } from '../lib/api'
+import { Loading, ErrorState } from '../components/AsyncState'
+import { DURATION_OPTIONS, MAX_DURATION_MIN } from '../data/breakglass'
 
 const ENVS = ['dev', 'staging', 'prod']
 
@@ -106,18 +101,44 @@ function Select({ value, onChange, children }) {
 
 /* -------------------------------- page -------------------------------- */
 
+// expiresAt/grantedAt arrive as ISO strings over the wire.
+const hydrate = (s) => ({
+  ...s,
+  grantedAt: s.grantedAt ? new Date(s.grantedAt) : null,
+  expiresAt: s.expiresAt ? new Date(s.expiresAt) : null,
+})
+
 export default function BreakGlass() {
-  const [sessions, setSessions] = useState(ACTIVE_SESSIONS)
-  const [history, setHistory] = useState(PAST_SESSIONS)
+  const [sessions, setSessions] = useState([])
+  const [history, setHistory] = useState([])
+  const [flags, setFlags] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(null)
   const [nowMs, setNowMs] = useState(Date.now())
   const [toast, setToast] = useState(null)
 
   // Form state
-  const [flagKey, setFlagKey] = useState(FLAGS[0].key)
+  const [flagKey, setFlagKey] = useState('')
   const [env, setEnv] = useState('prod')
   const [durationMin, setDurationMin] = useState(60)
   const [reason, setReason] = useState('')
   const [error, setError] = useState(false)
+
+  const reload = () => {
+    setLoading(true)
+    setLoadError(null)
+    Promise.all([api.get('/breakglass'), api.get('/flags')])
+      .then(([bg, fl]) => {
+        setSessions(bg.filter((s) => s.status === 'active').map(hydrate))
+        setHistory(bg.filter((s) => s.status !== 'active'))
+        setFlags(fl)
+        setFlagKey((k) => k || fl[0]?.key || '')
+      })
+      .catch((err) => setLoadError(err.message))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(reload, [])
 
   // Single ticking clock drives every countdown.
   useEffect(() => {
@@ -150,60 +171,47 @@ export default function BreakGlass() {
 
   const activeCount = sessions.length
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
     if (reason.trim().length < 10) {
       setError(true)
       return
     }
     setError(false)
-    const flag = FLAGS.find((f) => f.key === flagKey)
-    const id = `BG-${Math.floor(80 + Math.random() * 20)}`
-    const created = {
-      id,
-      user: CURRENT_USER,
-      flag: flag.name,
-      key: flag.key,
-      env,
-      reason: reason.trim(),
-      grantedLabel: 'just now',
-      durationMin,
-      grantedAt: new Date(),
-      expiresAt: new Date(Date.now() + durationMin * 60 * 1000),
-      used: 'No changes yet',
+    const flag = flags.find((f) => f.key === flagKey)
+    try {
+      const created = await api.post('/breakglass', {
+        flag: flag.name,
+        key: flag.key,
+        env,
+        reason: reason.trim(),
+        durationMin,
+      })
+      setSessions((s) => [hydrate(created), ...s])
+      setReason('')
+      setToast(
+        `Break-glass ${created.id} granted for ${flag.name} · ${env}. A notification fired to the team the moment it was granted.`,
+      )
+    } catch (err) {
+      setToast(err.message)
     }
-    setSessions((s) => [created, ...s])
-    setReason('')
-    setToast(
-      `Break-glass ${id} granted for ${flag.name} · ${env}. A notification fired to the team the moment it was granted.`,
-    )
   }
 
-  const revoke = (id) => {
-    setSessions((cur) => cur.filter((s) => s.id !== id))
-    const s = sessions.find((x) => x.id === id)
-    if (s) {
-      setHistory((h) => [
-        {
-          id: s.id,
-          user: s.user,
-          flag: s.flag,
-          key: s.key,
-          env: s.env,
-          reason: s.reason,
-          durationMin: s.durationMin,
-          status: 'revoked',
-          endedLabel: 'just now',
-          closedBy: `force-revoked by ${CURRENT_USER}`,
-          changes: 0,
-        },
-        ...h,
-      ])
+  const revoke = async (id) => {
+    try {
+      const updated = await api.post(`/breakglass/${id}/revoke`)
+      setSessions((cur) => cur.filter((s) => s.id !== id))
+      setHistory((h) => [{ ...updated, changes: updated.changes || 0 }, ...h])
+      setToast(`${id} force-revoked. The bypass is closed and the revocation is in the audit log.`)
+    } catch (err) {
+      setToast(err.message)
     }
-    setToast(`${id} force-revoked. The bypass is closed and the revocation is in the audit log.`)
   }
 
-  const selectedFlag = useMemo(() => FLAGS.find((f) => f.key === flagKey), [flagKey])
+  const selectedFlag = useMemo(() => flags.find((f) => f.key === flagKey), [flags, flagKey])
+
+  if (loading) return <Loading label="Loading break-glass sessions…" />
+  if (loadError) return <ErrorState message={loadError} onRetry={reload} />
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -268,7 +276,7 @@ export default function BreakGlass() {
           <form onSubmit={submit} className="mt-5 space-y-4">
             <Field label="Flag">
               <Select value={flagKey} onChange={(e) => setFlagKey(e.target.value)}>
-                {FLAGS.map((f) => (
+                {flags.map((f) => (
                   <option key={f.key} value={f.key}>
                     {f.name}
                   </option>
@@ -330,7 +338,7 @@ export default function BreakGlass() {
 
             <div className="rounded-xl bg-surface px-4 py-3 text-xs text-ink-faint">
               Requesting on{' '}
-              <span className="font-mono text-ink-soft">{selectedFlag.name}</span> ·{' '}
+              <span className="font-mono text-ink-soft">{selectedFlag?.name}</span> ·{' '}
               <span className="uppercase">{env}</span> for{' '}
               {DURATION_OPTIONS.find((d) => d.min === durationMin)?.label}. The team is
               notified the instant it's granted.
