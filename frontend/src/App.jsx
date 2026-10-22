@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
+import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Flags from './pages/Flags'
 import FlagDetail from './pages/FlagDetail'
@@ -11,9 +12,25 @@ import Experiments from './pages/Experiments'
 import Rollouts from './pages/Rollouts'
 import Settings from './pages/Settings'
 import Team from './pages/Team'
+import IssuesManagement from './pages/IssuesManagement'
+import DeveloperManagement from './pages/DeveloperManagement'
+import ApprovalQueue from './pages/ApprovalQueue'
 import Placeholder from './pages/Placeholder'
 import DashboardLayout from './components/dashboard/DashboardLayout'
 import { NAV_ITEMS } from './components/dashboard/nav'
+
+// Developer portal
+import DeveloperLayout from './components/developer/DeveloperLayout'
+import DeveloperDashboard from './pages/developer/DeveloperDashboard'
+import AvailableIssues from './pages/developer/AvailableIssues'
+import DevMyIssues from './pages/developer/DevMyIssues'
+import DevProfile from './pages/developer/DevProfile'
+
+// User portal
+import UserLayout from './components/user/UserLayout'
+import UserDashboard from './pages/user/UserDashboard'
+import ReportIssue from './pages/user/ReportIssue'
+import UserMyReports from './pages/user/UserMyReports'
 
 
 // Dashboard routes that have a real page built. Everything else in the nav
@@ -28,6 +45,9 @@ const BUILT = {
   '/rollouts': <Rollouts />,
   '/settings': <Settings />,
   '/team': <Team />,
+  '/issues': <IssuesManagement />,
+  '/developers-mgmt': <DeveloperManagement />,
+  '/approval-queue': <ApprovalQueue />,
 }
 
 export default function App() {
@@ -35,6 +55,9 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+
+      {/* Admin dashboard */}
       <Route element={<DashboardLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/flags" element={<Flags />} />
@@ -46,6 +69,9 @@ export default function App() {
         <Route path="/rollouts" element={<Rollouts />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/team" element={<Team />} />
+        <Route path="/issues" element={<IssuesManagement />} />
+        <Route path="/developers-mgmt" element={<DeveloperManagement />} />
+        <Route path="/approval-queue" element={<ApprovalQueue />} />
         {NAV_ITEMS.filter((i) => !BUILT[i.to]).map((i) => (
           <Route
             key={i.to}
@@ -53,6 +79,22 @@ export default function App() {
             element={<Placeholder title={i.label} icon={i.icon} />}
           />
         ))}
+      </Route>
+
+      {/* Developer portal */}
+      <Route element={<DeveloperLayout />}>
+        <Route path="/developer" element={<DeveloperDashboard />} />
+        <Route path="/developer/available" element={<AvailableIssues />} />
+        <Route path="/developer/my-issues" element={<DevMyIssues />} />
+        <Route path="/developer/status" element={<DevProfile />} />
+        <Route path="/developer/profile" element={<DevProfile />} />
+      </Route>
+
+      {/* User portal */}
+      <Route element={<UserLayout />}>
+        <Route path="/user" element={<UserDashboard />} />
+        <Route path="/user/report" element={<ReportIssue />} />
+        <Route path="/user/my-reports" element={<UserMyReports />} />
       </Route>
     </Routes>
   )
