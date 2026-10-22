@@ -1,7 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+const ROLES = [
+  { key: "admin", label: "Admin", desc: "Manage everything", color: "bg-ink text-surface" },
+  { key: "developer", label: "Developer", desc: "Fix issues", color: "bg-accent text-[#1a0f00]" },
+  { key: "user", label: "User", desc: "Report issues", color: "bg-signal-blue/30 text-signal-blue" },
+];
+
 export default function Login() {
+  const [role, setRole] = useState("admin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -38,15 +45,32 @@ export default function Login() {
 
       // Store JWT
       localStorage.setItem("token", data.token);
+      localStorage.setItem("role", role);
 
-      // Redirect to dashboard
-      navigate("/dashboard");
+      // Redirect based on role
+      const redirectMap = {
+        admin: "/dashboard",
+        developer: "/developer",
+        user: "/user",
+      };
+      navigate(redirectMap[role]);
     } catch (error) {
       console.error("Login error:", error);
       setError("Cannot connect to backend");
     } finally {
       setLoading(false);
     }
+  };
+
+  // Quick demo login (skip backend)
+  const handleDemoLogin = () => {
+    localStorage.setItem("role", role);
+    const redirectMap = {
+      admin: "/dashboard",
+      developer: "/developer",
+      user: "/user",
+    };
+    navigate(redirectMap[role]);
   };
 
   return (
@@ -99,9 +123,29 @@ export default function Login() {
             </h1>
 
             <p className="mt-4 text-black/55 text-base leading-relaxed">
-              Sign in to manage your flags, experiments,
-              rollouts, and approvals.
+              Sign in to your workspace portal.
             </p>
+          </div>
+
+          {/* Role selector */}
+          <div className="flex gap-2 mb-6">
+            {ROLES.map((r) => (
+              <button
+                key={r.key}
+                type="button"
+                onClick={() => setRole(r.key)}
+                className={`flex-1 rounded-xl px-3 py-3 text-center transition-all border ${
+                  role === r.key
+                    ? `${r.color} border-transparent shadow-sm scale-[1.02]`
+                    : "bg-white/50 border-black/10 text-black/50 hover:bg-white/80"
+                }`}
+              >
+                <p className="text-sm font-semibold">{r.label}</p>
+                <p className={`text-[0.65rem] mt-0.5 ${role === r.key ? "opacity-80" : "opacity-50"}`}>
+                  {r.desc}
+                </p>
+              </button>
+            ))}
           </div>
 
           {/* Card */}
@@ -126,7 +170,7 @@ export default function Login() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@gmail.com"
+                  placeholder={`${role}@example.com`}
                   required
                   className="
                     w-full
@@ -208,13 +252,46 @@ export default function Login() {
 
             </form>
 
-            
+            {/* Divider */}
+            <div className="flex items-center gap-3 my-5">
+              <div className="flex-1 h-px bg-black/10" />
+              <span className="text-xs text-black/40">or</span>
+              <div className="flex-1 h-px bg-black/10" />
+            </div>
+
+            {/* Demo login */}
+            <button
+              type="button"
+              onClick={handleDemoLogin}
+              className="
+                w-full
+                bg-white
+                border border-black/15
+                text-black
+                rounded-xl
+                py-3.5
+                font-medium
+                hover:bg-black/5
+                transition
+                cursor-pointer
+              "
+            >
+              Demo login as {role.charAt(0).toUpperCase() + role.slice(1)} →
+            </button>
 
           </div>
 
-          <p className="text-center text-xs text-black/40 mt-6">
-            Protected by FeatureForge authentication
-          </p>
+          <div className="flex items-center justify-between mt-6">
+            <p className="text-xs text-black/40">
+              Protected by FeatureForge authentication
+            </p>
+            <Link
+              to="/register"
+              className="text-xs font-medium text-black/60 hover:text-black transition underline underline-offset-2"
+            >
+              Create account
+            </Link>
+          </div>
 
         </div>
 

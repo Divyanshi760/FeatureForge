@@ -8,6 +8,9 @@ import {
   KeyIcon,
   UsersIcon,
   CogIcon,
+  BugIcon,
+  CodeIcon,
+  ClipboardCheckIcon,
 } from '../icons'
 
 /**
@@ -26,6 +29,14 @@ export const NAV_SECTIONS = [
     ],
   },
   {
+    heading: 'Issue Tracking',
+    items: [
+      { label: 'Issues', to: '/issues', icon: BugIcon, badge: 3 },
+      { label: 'Developers', to: '/developers-mgmt', icon: CodeIcon },
+      { label: 'Pick Approvals', to: '/approval-queue', icon: ClipboardCheckIcon, badge: 2 },
+    ],
+  },
+  {
     heading: 'Governance',
     items: [
       { label: 'Audit log', to: '/audit', icon: ScrollIcon },
@@ -37,3 +48,4 @@ export const NAV_SECTIONS = [
 ]
 
 export const NAV_ITEMS = NAV_SECTIONS.flatMap((s) => s.items)
+

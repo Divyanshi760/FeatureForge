@@ -209,3 +209,75 @@ export function LayersIcon({ className }) {
     </svg>
   )
 }
+
+export function BugIcon({ className }) {
+  return (
+    <svg className={className} {...base}>
+      <path d="M8 2l1.88 1.88M16 2l-1.88 1.88M9 7.13v-1a3.003 3.003 0 1 1 6 0v1" />
+      <path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6Z" />
+      <path d="M12 20v-9M6.53 9C4.6 8.8 3 7.1 3 5M6 13H2M6 17l-4 1M17.47 9c1.93-.2 3.53-1.9 3.53-4M18 13h4M18 17l4 1" />
+    </svg>
+  )
+}
+
+export function CodeIcon({ className }) {
+  return (
+    <svg className={className} {...base}>
+      <path d="M16 18l6-6-6-6M8 6l-6 6 6 6" />
+    </svg>
+  )
+}
+
+export function ClipboardCheckIcon({ className }) {
+  return (
+    <svg className={className} {...base}>
+      <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <path d="M9 14l2 2 4-4" />
+    </svg>
+  )
+}
+
+export function UserIcon({ className }) {
+  return (
+    <svg className={className} {...base}>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M5.5 21a6.5 6.5 0 0 1 13 0" />
+    </svg>
+  )
+}
+
+export function FileTextIcon({ className }) {
+  return (
+    <svg className={className} {...base}>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+      <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
+    </svg>
+  )
+}
+
+export function InboxIcon({ className }) {
+  return (
+    <svg className={className} {...base}>
+      <path d="M22 12h-6l-2 3H10l-2-3H2" />
+      <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11Z" />
+    </svg>
+  )
+}
+
+export function ToggleIcon({ className }) {
+  return (
+    <svg className={className} {...base}>
+      <rect x="1" y="5" width="22" height="14" rx="7" ry="7" />
+      <circle cx="16" cy="12" r="3" />
+    </svg>
+  )
+}
+
+export function LogOutIcon({ className }) {
+  return (
+    <svg className={className} {...base}>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
+    </svg>
+  )
+}
