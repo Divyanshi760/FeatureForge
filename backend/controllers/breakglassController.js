@@ -33,6 +33,8 @@ exports.request = async (req, res) => {
       grantedAt: new Date(now),
       expiresAt: new Date(now + durationMin * 60000),
       status: 'active',
+      grantedLabel: 'just now',
+      used: 'No changes yet',
     });
 
     await writeAudit({

@@ -369,7 +369,7 @@ export default function FlagDetail() {
               <p className="text-sm leading-relaxed text-ink-soft">{flag.description}</p>
               <div className="flex items-center justify-between border-t border-line pt-3">
                 <dt className="text-ink-faint">Created by</dt>
-                <dd className="font-medium text-ink">{flag.createdBy}</dd>
+                <dd className="font-medium text-ink">{flag.createdBy || flag.by}</dd>
               </div>
               <div className="flex items-center justify-between">
                 <dt className="text-ink-faint">Last modified</dt>
