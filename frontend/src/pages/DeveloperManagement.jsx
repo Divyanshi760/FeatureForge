@@ -1,20 +1,41 @@
-import { useState } from 'react'
-import { DEVELOPERS, STATUS_BADGE } from '../data/developers'
-import { ISSUES, PRIORITY_META, computePriority } from '../data/issues'
+import { useCallback, useEffect, useState } from 'react'
+import { STATUS_BADGE } from '../data/developers'
+import { PRIORITY_META } from '../data/issues'
+import { useIssues } from '../hooks/useIssues'
+import { api } from '../lib/api'
+import { Loading, ErrorState } from '../components/AsyncState'
 
 export default function DeveloperManagement() {
+  const { issues, setIssues, loading: issuesLoading, error: issuesError, reload: reloadIssues } = useIssues()
+  const [devs, setDevs] = useState([])
+  const [devsLoading, setDevsLoading] = useState(true)
+  const [devsError, setDevsError] = useState(null)
   const [filter, setFilter] = useState('all') // all | free | occupied
   const [search, setSearch] = useState('')
-  const [devs, setDevs] = useState(DEVELOPERS)
-  const [issues, setIssues] = useState(ISSUES)
   const [assignModal, setAssignModal] = useState(null) // developer object
   const [selectedIssue, setSelectedIssue] = useState('')
   const [feedback, setFeedback] = useState(null)
 
+  const loadDevs = useCallback(async () => {
+    setDevsLoading(true)
+    setDevsError(null)
+    try {
+      setDevs(await api.get('/developers'))
+    } catch (err) {
+      setDevsError(err.message)
+    } finally {
+      setDevsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadDevs()
+  }, [loadDevs])
+
   const filtered = devs.filter((d) => {
     const matchesFilter = filter === 'all' || d.status === filter
     const matchesSearch = d.name.toLowerCase().includes(search.toLowerCase()) ||
-      d.specialty.toLowerCase().includes(search.toLowerCase())
+      (d.specialty || '').toLowerCase().includes(search.toLowerCase())
     return matchesFilter && matchesSearch
   })
 
@@ -22,39 +43,28 @@ export default function DeveloperManagement() {
   const occupiedCount = devs.filter((d) => d.status === 'occupied').length
   const unassignedIssues = issues.filter((i) => !i.assignedTo && i.status === 'open')
 
-  const handleAssign = () => {
+  const handleAssign = async () => {
     if (!assignModal || !selectedIssue) return
     const issue = issues.find((i) => i.id === selectedIssue)
-
-    // Update developer → occupied
-    setDevs((prev) =>
-      prev.map((d) =>
-        d.id === assignModal.id
-          ? { ...d, status: 'occupied', activeIssues: d.activeIssues + 1, currentIssue: issue.id }
-          : d
-      )
-    )
-
-    // Update issue → assigned
-    setIssues((prev) =>
-      prev.map((i) =>
-        i.id === selectedIssue
-          ? {
-              ...i,
-              status: 'assigned',
-              assignedTo: { id: assignModal.id, name: assignModal.name, email: assignModal.email },
-              assignmentType: 'admin_assigned',
-              adminApproved: true,
-            }
-          : i
-      )
-    )
-
-    setFeedback({ msg: `${assignModal.name} → ${issue.id}: ${issue.title}` })
-    setAssignModal(null)
-    setSelectedIssue('')
-    setTimeout(() => setFeedback(null), 4000)
+    try {
+      const updated = await api.post(`/issues/${selectedIssue}/assign`, {
+        developer: { id: assignModal._id, name: assignModal.name, email: assignModal.email },
+      })
+      setIssues((prev) => prev.map((i) => (i.id === selectedIssue ? updated : i)))
+      await loadDevs()
+      setFeedback({ type: 'success', msg: `${assignModal.name} → ${issue.id}: ${issue.title}` })
+      setAssignModal(null)
+      setSelectedIssue('')
+      setTimeout(() => setFeedback(null), 4000)
+    } catch (err) {
+      setFeedback({ type: 'error', msg: err.message })
+      setTimeout(() => setFeedback(null), 4000)
+    }
   }
+
+  if (issuesLoading || devsLoading) return <Loading label="Loading developers…" />
+  if (issuesError) return <ErrorState message={issuesError} onRetry={reloadIssues} />
+  if (devsError) return <ErrorState message={devsError} onRetry={loadDevs} />
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -70,8 +80,12 @@ export default function DeveloperManagement() {
 
       {/* Feedback toast */}
       {feedback && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
-          ✓ Assigned: {feedback.msg}
+        <div className={`rounded-xl border px-4 py-3 text-sm font-medium ${
+          feedback.type === 'error'
+            ? 'border-red-200 bg-red-50 text-red-700'
+            : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+        }`}>
+          {feedback.type === 'error' ? `✕ ${feedback.msg}` : `✓ Assigned: ${feedback.msg}`}
         </div>
       )}
 
@@ -130,12 +144,12 @@ export default function DeveloperManagement() {
         {filtered.map((dev) => {
           const badge = STATUS_BADGE[dev.status]
           return (
-            <div key={dev.id} className="card p-5 flex flex-col gap-4 hover:shadow-md transition-shadow">
+            <div key={dev._id} className="card p-5 flex flex-col gap-4 hover:shadow-md transition-shadow">
               {/* Header */}
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <span className="grid h-11 w-11 place-items-center rounded-full bg-ink text-sm font-semibold text-surface">
-                    {dev.avatar}
+                    {dev.avatar || dev.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                   </span>
                   <div>
                     <p className="font-semibold text-ink">{dev.name}</p>
@@ -151,7 +165,7 @@ export default function DeveloperManagement() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-lg bg-surface px-3 py-2">
                   <p className="text-[0.65rem] font-semibold text-ink-faint uppercase tracking-wider">Specialty</p>
-                  <p className="text-sm font-medium text-ink mt-0.5">{dev.specialty}</p>
+                  <p className="text-sm font-medium text-ink mt-0.5">{dev.specialty || '—'}</p>
                 </div>
                 <div className="rounded-lg bg-surface px-3 py-2">
                   <p className="text-[0.65rem] font-semibold text-ink-faint uppercase tracking-wider">Active</p>

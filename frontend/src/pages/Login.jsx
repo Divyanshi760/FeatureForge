@@ -1,11 +1,15 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { api } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 
 const ROLES = [
   { key: "admin", label: "Admin", desc: "Manage everything", color: "bg-ink text-surface" },
   { key: "developer", label: "Developer", desc: "Fix issues", color: "bg-accent text-[#1a0f00]" },
   { key: "user", label: "User", desc: "Report issues", color: "bg-signal-blue/30 text-signal-blue" },
 ];
+
+const HOME_BY_ROLE = { admin: "/dashboard", developer: "/developer", user: "/user" };
 
 export default function Login() {
   const [role, setRole] = useState("admin");
@@ -15,6 +19,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -22,55 +27,14 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch(
-        "http://127.0.0.1:5000/api/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            password,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || "Login failed");
-        return;
-      }
-
-      // Store JWT
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("role", role);
-
-      // Redirect based on role
-      const redirectMap = {
-        admin: "/dashboard",
-        developer: "/developer",
-        user: "/user",
-      };
-      navigate(redirectMap[role]);
-    } catch (error) {
-      console.error("Login error:", error);
-      setError("Cannot connect to backend");
+      const data = await api.post("/auth/login", { email, password });
+      login(data);
+      navigate(HOME_BY_ROLE[data.user.role] || "/");
+    } catch (err) {
+      setError(err.message || "Unable to sign in");
     } finally {
       setLoading(false);
     }
-  };
-
-  // Quick demo login (skip backend)
-  const handleDemoLogin = () => {
-    localStorage.setItem("role", role);
-    const redirectMap = {
-      admin: "/dashboard",
-      developer: "/developer",
-      user: "/user",
-    };
-    navigate(redirectMap[role]);
   };
 
   return (
@@ -251,33 +215,6 @@ export default function Login() {
               </button>
 
             </form>
-
-            {/* Divider */}
-            <div className="flex items-center gap-3 my-5">
-              <div className="flex-1 h-px bg-black/10" />
-              <span className="text-xs text-black/40">or</span>
-              <div className="flex-1 h-px bg-black/10" />
-            </div>
-
-            {/* Demo login */}
-            <button
-              type="button"
-              onClick={handleDemoLogin}
-              className="
-                w-full
-                bg-white
-                border border-black/15
-                text-black
-                rounded-xl
-                py-3.5
-                font-medium
-                hover:bg-black/5
-                transition
-                cursor-pointer
-              "
-            >
-              Demo login as {role.charAt(0).toUpperCase() + role.slice(1)} →
-            </button>
 
           </div>
 

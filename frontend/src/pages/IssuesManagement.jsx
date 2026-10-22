@@ -1,17 +1,37 @@
-import { useState } from 'react'
-import { ISSUES, PRIORITY_META, STATUS_META, computePriority } from '../data/issues'
-import { DEVELOPERS } from '../data/developers'
+import { useCallback, useEffect, useState } from 'react'
+import { PRIORITY_META, STATUS_META } from '../data/issues'
+import { useIssues } from '../hooks/useIssues'
+import { api } from '../lib/api'
+import { Loading, ErrorState } from '../components/AsyncState'
 
 const FILTERS = ['all', 'open', 'assigned', 'in_progress', 'resolved', 'closed']
 
 export default function IssuesManagement() {
+  const { issues, setIssues, loading: issuesLoading, error: issuesError, reload: reloadIssues } = useIssues()
+  const [devs, setDevs] = useState([])
+  const [devsLoading, setDevsLoading] = useState(true)
+  const [devsError, setDevsError] = useState(null)
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [assignModal, setAssignModal] = useState(null) // issue object
   const [selectedDev, setSelectedDev] = useState('')
-  const [issues, setIssues] = useState(ISSUES)
-  const [devs, setDevs] = useState(DEVELOPERS)
   const [feedback, setFeedback] = useState(null)
+
+  const loadDevs = useCallback(async () => {
+    setDevsLoading(true)
+    setDevsError(null)
+    try {
+      setDevs(await api.get('/developers'))
+    } catch (err) {
+      setDevsError(err.message)
+    } finally {
+      setDevsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadDevs()
+  }, [loadDevs])
 
   const filtered = issues.filter((i) => {
     const matchesFilter = filter === 'all' || i.status === filter
@@ -24,40 +44,28 @@ export default function IssuesManagement() {
   const freeDevelopers = devs.filter((d) => d.status === 'free')
   const unassignedIssues = issues.filter((i) => !i.assignedTo && i.status === 'open')
 
-  const handleAssign = () => {
+  const handleAssign = async () => {
     if (!assignModal || !selectedDev) return
-
-    const dev = devs.find((d) => d.id === selectedDev)
-
-    // Update issue
-    setIssues((prev) =>
-      prev.map((i) =>
-        i.id === assignModal.id
-          ? {
-              ...i,
-              status: 'assigned',
-              assignedTo: { id: dev.id, name: dev.name, email: dev.email },
-              assignmentType: 'admin_assigned',
-              adminApproved: true,
-            }
-          : i
-      )
-    )
-
-    // Update developer status to occupied
-    setDevs((prev) =>
-      prev.map((d) =>
-        d.id === selectedDev
-          ? { ...d, status: 'occupied', activeIssues: d.activeIssues + 1, currentIssue: assignModal.id }
-          : d
-      )
-    )
-
-    setFeedback({ type: 'success', msg: `${dev.name} assigned to ${assignModal.id}` })
-    setAssignModal(null)
-    setSelectedDev('')
-    setTimeout(() => setFeedback(null), 4000)
+    const dev = devs.find((d) => d._id === selectedDev)
+    try {
+      const updated = await api.post(`/issues/${assignModal.id}/assign`, {
+        developer: { id: dev._id, name: dev.name, email: dev.email },
+      })
+      setIssues((prev) => prev.map((i) => (i.id === assignModal.id ? updated : i)))
+      await loadDevs()
+      setFeedback({ type: 'success', msg: `${dev.name} assigned to ${assignModal.id}` })
+      setAssignModal(null)
+      setSelectedDev('')
+      setTimeout(() => setFeedback(null), 4000)
+    } catch (err) {
+      setFeedback({ type: 'error', msg: err.message })
+      setTimeout(() => setFeedback(null), 4000)
+    }
   }
+
+  if (issuesLoading || devsLoading) return <Loading label="Loading issues…" />
+  if (issuesError) return <ErrorState message={issuesError} onRetry={reloadIssues} />
+  if (devsError) return <ErrorState message={devsError} onRetry={loadDevs} />
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -93,8 +101,12 @@ export default function IssuesManagement() {
 
       {/* Feedback toast */}
       {feedback && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
-          ✓ {feedback.msg}
+        <div className={`rounded-xl border px-4 py-3 text-sm font-medium ${
+          feedback.type === 'error'
+            ? 'border-red-200 bg-red-50 text-red-700'
+            : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+        }`}>
+          {feedback.type === 'error' ? '✕' : '✓'} {feedback.msg}
         </div>
       )}
 
@@ -245,9 +257,9 @@ export default function IssuesManagement() {
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {freeDevelopers.map((dev) => (
                   <label
-                    key={dev.id}
+                    key={dev._id}
                     className={`flex items-center gap-3 rounded-xl border px-4 py-3 cursor-pointer transition-colors ${
-                      selectedDev === dev.id
+                      selectedDev === dev._id
                         ? 'border-accent bg-accent-soft'
                         : 'border-line hover:bg-surface'
                     }`}
@@ -255,13 +267,13 @@ export default function IssuesManagement() {
                     <input
                       type="radio"
                       name="developer"
-                      value={dev.id}
-                      checked={selectedDev === dev.id}
-                      onChange={() => setSelectedDev(dev.id)}
+                      value={dev._id}
+                      checked={selectedDev === dev._id}
+                      onChange={() => setSelectedDev(dev._id)}
                       className="sr-only"
                     />
                     <span className="grid h-9 w-9 place-items-center rounded-full bg-ink text-sm font-semibold text-surface">
-                      {dev.avatar}
+                      {dev.avatar || dev.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-ink">{dev.name}</p>

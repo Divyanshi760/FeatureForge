@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { api } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
+
+const HOME_BY_ROLE = { admin: "/dashboard", developer: "/developer", user: "/user" };
 
 const ROLES = [
-  { key: "admin", label: "Admin", desc: "Full platform control", color: "bg-ink text-surface" },
   { key: "developer", label: "Developer", desc: "Fix & resolve issues", color: "bg-accent text-[#1a0f00]" },
   { key: "user", label: "User", desc: "Report issues", color: "bg-signal-blue/30 text-signal-blue" },
 ];
@@ -17,6 +20,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -35,34 +39,11 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const response = await fetch(
-        "http://127.0.0.1:5000/api/auth/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name,
-            email,
-            password,
-            role,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || "Registration failed");
-        return;
-      }
-
-      // Redirect to login
-      navigate("/login");
-    } catch (error) {
-      console.error("Registration error:", error);
-      setError("Cannot connect to backend. Use demo login instead.");
+      const data = await api.post("/auth/register", { name, email, password, role });
+      login(data);
+      navigate(HOME_BY_ROLE[data.user.role] || "/");
+    } catch (err) {
+      setError(err.message || "Unable to register");
     } finally {
       setLoading(false);
     }

@@ -1,19 +1,26 @@
 import { useState } from 'react'
-import { ISSUES, PRIORITY_META, STATUS_META } from '../../data/issues'
-
-// Mock: current user is user-1 (Riya Sharma)
-const MY_REPORTS = ISSUES.filter((i) => i.reportedBy.id === 'user-1')
+import { PRIORITY_META, STATUS_META } from '../../data/issues'
+import { useAuth } from '../../context/AuthContext'
+import { useIssues } from '../../hooks/useIssues'
+import { Loading, ErrorState } from '../../components/AsyncState'
 
 const TABS = ['all', 'open', 'in_progress', 'resolved', 'closed']
 
 export default function UserMyReports() {
+  const { user } = useAuth()
+  const { issues, loading, error, reload } = useIssues()
   const [tab, setTab] = useState('all')
 
-  const filtered = MY_REPORTS.filter((i) => {
+  const myReports = issues.filter((i) => i.reportedBy?.email === user?.email)
+
+  const filtered = myReports.filter((i) => {
     if (tab === 'all') return true
     if (tab === 'in_progress') return i.status === 'assigned' || i.status === 'in_progress'
     return i.status === tab
   })
+
+  if (loading) return <Loading label="Loading your reports…" />
+  if (error) return <ErrorState message={error} onRetry={reload} />
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -26,7 +33,7 @@ export default function UserMyReports() {
           </p>
         </div>
         <p className="text-sm text-ink-faint">
-          <span className="font-semibold text-ink">{MY_REPORTS.length}</span> total reports
+          <span className="font-semibold text-ink">{myReports.length}</span> total reports
         </p>
       </div>
 

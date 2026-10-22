@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   SearchIcon,
@@ -8,7 +8,9 @@ import {
   CheckIcon,
   XIcon,
 } from '../components/icons'
-import { AUDIT_LOG, ACTION_META, ACTION_ORDER } from '../data/audit'
+import { api } from '../lib/api'
+import { Loading, ErrorState } from '../components/AsyncState'
+import { ACTION_META, ACTION_ORDER } from '../data/audit'
 
 /* ------------------------------ helpers ------------------------------- */
 
@@ -133,16 +135,38 @@ function Entry({ e, open, onToggle }) {
 /* -------------------------------- page -------------------------------- */
 
 export default function Audit() {
+  const [entries, setEntries] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [q, setQ] = useState('')
   const [action, setAction] = useState('All')
+  const [who, setWho] = useState('All')
   const [openId, setOpenId] = useState(null)
   const [toast, setToast] = useState(null)
   const [exportOpen, setExportOpen] = useState(false)
 
+  const reload = () => {
+    setLoading(true)
+    setError(null)
+    api
+      .get('/audit')
+      .then(setEntries)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(reload, [])
+
+  const actors = useMemo(
+    () => [...new Set(entries.map((e) => e.actor))].sort(),
+    [entries],
+  )
+
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()
-    return AUDIT_LOG.filter((e) => {
+    return entries.filter((e) => {
       if (action !== 'All' && e.action !== action) return false
+      if (who !== 'All' && e.actor !== who) return false
       if (
         needle &&
         !e.flag.toLowerCase().includes(needle) &&
@@ -153,7 +177,7 @@ export default function Audit() {
         return false
       return true
     })
-  }, [q, action])
+  }, [entries, q, action, who])
 
   // Group the filtered entries into day buckets, preserving order.
   const groups = useMemo(() => {
@@ -170,6 +194,9 @@ export default function Audit() {
     setExportOpen(false)
     setToast(`Exported ${filtered.length} entries as ${fmt}. Check your downloads.`)
   }
+
+  if (loading) return <Loading label="Loading audit log…" />
+  if (error) return <ErrorState message={error} onRetry={reload} />
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -249,15 +276,32 @@ export default function Audit() {
             </FilterPill>
           ))}
         </div>
-        <div className="relative">
-          <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
-          <input
-            type="search"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search flag, actor or ID"
-            className="w-full rounded-full border border-line bg-surface py-2.5 pl-9 pr-4 text-sm text-ink placeholder:text-ink-faint focus:border-line-strong focus:outline-none lg:w-72"
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <select
+              value={who}
+              onChange={(e) => setWho(e.target.value)}
+              className="appearance-none rounded-full border border-line bg-surface py-2.5 pl-4 pr-9 text-sm text-ink-soft focus:border-line-strong focus:outline-none"
+            >
+              <option value="All">All actors</option>
+              {actors.map((a) => (
+                <option key={a} value={a}>
+                  {a}
+                </option>
+              ))}
+            </select>
+            <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
+          </div>
+          <div className="relative">
+            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
+            <input
+              type="search"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search flag, actor or ID"
+              className="w-full rounded-full border border-line bg-surface py-2.5 pl-9 pr-4 text-sm text-ink placeholder:text-ink-faint focus:border-line-strong focus:outline-none lg:w-72"
+            />
+          </div>
         </div>
       </div>
 
@@ -297,7 +341,7 @@ export default function Audit() {
 
       {groups.length > 0 && (
         <p className="px-1 text-sm text-ink-faint">
-          Showing {filtered.length} of {AUDIT_LOG.length} entries
+          Showing {filtered.length} of {entries.length} entries
         </p>
       )}
     </div>

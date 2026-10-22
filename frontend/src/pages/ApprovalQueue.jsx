@@ -1,15 +1,38 @@
 import { useState } from 'react'
-import { PENDING_APPROVALS, PRIORITY_META } from '../data/issues'
+import { PRIORITY_META } from '../data/issues'
+import { useIssues } from '../hooks/useIssues'
+import { api } from '../lib/api'
+import { Loading, ErrorState } from '../components/AsyncState'
 
 export default function ApprovalQueue() {
-  const [approvals, setApprovals] = useState(PENDING_APPROVALS)
+  const { issues, setIssues, loading, error, reload } = useIssues()
   const [actionFeedback, setActionFeedback] = useState(null)
 
-  const handleAction = (issueId, action) => {
-    setApprovals((prev) => prev.filter((a) => a.id !== issueId))
-    setActionFeedback({ issueId, action })
+  const approvals = issues
+    .filter((i) => i.selfPickRequest?.requestedBy)
+    .map((i) => ({
+      id: i.id,
+      title: i.title,
+      priority: i.priority,
+      requestedBy: i.selfPickRequest.requestedBy,
+      requestedAt: i.selfPickRequest.requestedAt,
+      reportedBy: i.reportedBy,
+    }))
+
+  const handleAction = async (issueId, action) => {
+    const endpoint = action === 'approved' ? 'approve' : 'reject'
+    try {
+      const { issue } = await api.post(`/issues/${issueId}/${endpoint}`)
+      setIssues((prev) => prev.map((i) => (i.id === issueId ? issue : i)))
+      setActionFeedback({ type: 'ok', issueId, action })
+    } catch (err) {
+      setActionFeedback({ type: 'error', issueId, action, msg: err.message })
+    }
     setTimeout(() => setActionFeedback(null), 3000)
   }
+
+  if (loading) return <Loading label="Loading approval queue…" />
+  if (error) return <ErrorState message={error} onRetry={reload} />
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -25,12 +48,16 @@ export default function ApprovalQueue() {
       {actionFeedback && (
         <div
           className={`rounded-xl border px-4 py-3 text-sm font-medium transition-all ${
-            actionFeedback.action === 'approved'
+            actionFeedback.type === 'error'
+              ? 'bg-red-50 border-red-200 text-red-700'
+              : actionFeedback.action === 'approved'
               ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
               : 'bg-red-50 border-red-200 text-red-700'
           }`}
         >
-          {actionFeedback.action === 'approved'
+          {actionFeedback.type === 'error'
+            ? `✕ ${actionFeedback.msg}`
+            : actionFeedback.action === 'approved'
             ? `✓ Self-pick for ${actionFeedback.issueId} approved`
             : `✕ Self-pick for ${actionFeedback.issueId} rejected`
           }

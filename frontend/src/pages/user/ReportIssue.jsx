@@ -1,17 +1,23 @@
 import { useState } from 'react'
-import { ISSUES, PRIORITY_META, STATUS_META, computePriority } from '../../data/issues'
+import { PRIORITY_META, STATUS_META } from '../../data/issues'
+import { useAuth } from '../../context/AuthContext'
+import { useIssues } from '../../hooks/useIssues'
+import { api } from '../../lib/api'
+import { Loading, ErrorState } from '../../components/AsyncState'
 
 export default function ReportIssue() {
-  const [issues, setIssues] = useState(ISSUES)
+  const { user } = useAuth()
+  const { issues, setIssues, loading, error, reload } = useIssues()
   const [search, setSearch] = useState('')
   const [form, setForm] = useState({ title: '', description: '' })
   const [feedback, setFeedback] = useState(null) // { type: 'upvoted' | 'created', msg: '' }
-  const [voted, setVoted] = useState([]) // issue IDs user already upvoted
+  const [submitting, setSubmitting] = useState(false)
+
+  const reporter = user && { id: user.id, name: user.name, email: user.email }
+  const hasVoted = (issue) => issue.reporters?.some((r) => r.id === user?.id)
 
   // All non-closed issues users can see and potentially "+1"
-  const visibleIssues = issues.filter(
-    (i) => i.status !== 'closed'
-  )
+  const visibleIssues = issues.filter((i) => i.status !== 'closed')
 
   const searchedIssues = visibleIssues.filter((i) =>
     i.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -19,58 +25,48 @@ export default function ReportIssue() {
     i.id.toLowerCase().includes(search.toLowerCase())
   )
 
-  const handleUpvote = (issueId) => {
-    setIssues((prev) =>
-      prev.map((i) =>
-        i.id === issueId
-          ? {
-              ...i,
-              reportCount: i.reportCount + 1,
-              priority: computePriority(i.reportCount + 1),
-              reporters: [...(i.reporters || []), { id: 'user-self', name: 'You' }],
-            }
-          : i
-      )
-    )
-    setVoted((prev) => [...prev, issueId])
-
-    const issue = issues.find((i) => i.id === issueId)
-    const newCount = issue.reportCount + 1
-    const newPriority = computePriority(newCount)
-    const escalated = newPriority !== issue.priority
-
-    setFeedback({
-      type: 'upvoted',
-      msg: escalated
-        ? `Reported ${issueId} — priority escalated to ${PRIORITY_META[newPriority].label} (${newCount} reports)`
-        : `Reported ${issueId} — now ${newCount} reports`,
-    })
-    setTimeout(() => setFeedback(null), 4000)
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    const id = `ISS-${String(Math.floor(Math.random() * 900) + 100)}`
-    const newIssue = {
-      id,
-      title: form.title,
-      description: form.description,
-      reportCount: 1,
-      reporters: [{ id: 'user-self', name: 'You' }],
-      priority: computePriority(1), // 1 report = low
-      status: 'open',
-      reportedBy: { id: 'user-self', name: 'You', email: 'you@example.com' },
-      assignedTo: null,
-      assignmentType: null,
-      adminApproved: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+  const handleUpvote = async (issueId) => {
+    const before = issues.find((i) => i.id === issueId)
+    try {
+      const updated = await api.post(`/issues/${issueId}/upvote`, { reporter })
+      setIssues((prev) => prev.map((i) => (i.id === issueId ? updated : i)))
+      const escalated = before && updated.priority !== before.priority
+      setFeedback({
+        type: 'upvoted',
+        msg: escalated
+          ? `Reported ${issueId} — priority escalated to ${PRIORITY_META[updated.priority].label} (${updated.reportCount} reports)`
+          : `Reported ${issueId} — now ${updated.reportCount} reports`,
+      })
+      setTimeout(() => setFeedback(null), 4000)
+    } catch (err) {
+      setFeedback({ type: 'error', msg: err.message })
+      setTimeout(() => setFeedback(null), 4000)
     }
-    setIssues((prev) => [newIssue, ...prev])
-    setForm({ title: '', description: '' })
-    setFeedback({ type: 'created', msg: `New issue ${id} created (priority: Low — 1 report)` })
-    setTimeout(() => setFeedback(null), 4000)
   }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setSubmitting(true)
+    try {
+      const created = await api.post('/issues', {
+        title: form.title,
+        description: form.description,
+        reportedBy: reporter,
+      })
+      setIssues((prev) => [created, ...prev])
+      setForm({ title: '', description: '' })
+      setFeedback({ type: 'created', msg: `New issue ${created.id} created (priority: Low — 1 report)` })
+      setTimeout(() => setFeedback(null), 4000)
+    } catch (err) {
+      setFeedback({ type: 'error', msg: err.message })
+      setTimeout(() => setFeedback(null), 4000)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  if (loading) return <Loading label="Loading issues…" />
+  if (error) return <ErrorState message={error} onRetry={reload} />
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -100,11 +96,13 @@ export default function ReportIssue() {
       {/* Feedback toast */}
       {feedback && (
         <div className={`rounded-xl border px-4 py-3 text-sm font-medium transition-all ${
-          feedback.type === 'upvoted'
+          feedback.type === 'error'
+            ? 'border-red-200 bg-red-50 text-red-700'
+            : feedback.type === 'upvoted'
             ? 'border-blue-200 bg-blue-50 text-blue-700'
             : 'border-emerald-200 bg-emerald-50 text-emerald-700'
         }`}>
-          ✓ {feedback.msg}
+          {feedback.type === 'error' ? '✕' : '✓'} {feedback.msg}
         </div>
       )}
 
@@ -129,7 +127,7 @@ export default function ReportIssue() {
           {searchedIssues.map((issue) => {
             const pri = PRIORITY_META[issue.priority]
             const sta = STATUS_META[issue.status]
-            const alreadyVoted = voted.includes(issue.id)
+            const alreadyVoted = hasVoted(issue)
             return (
               <div key={issue.id} className="card p-4 hover:shadow-md transition-shadow">
                 <div className="flex gap-4">
@@ -258,9 +256,10 @@ export default function ReportIssue() {
           {/* Submit */}
           <button
             type="submit"
-            className="rounded-xl bg-ink px-6 py-3 text-sm font-semibold text-surface hover:bg-[#26251f] transition-colors"
+            disabled={submitting}
+            className="rounded-xl bg-ink px-6 py-3 text-sm font-semibold text-surface hover:bg-[#26251f] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Submit New Issue
+            {submitting ? 'Submitting…' : 'Submit New Issue'}
           </button>
         </form>
       </div>

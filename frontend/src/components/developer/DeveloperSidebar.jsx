@@ -1,6 +1,7 @@
 import { Link, NavLink } from 'react-router-dom'
 import { DEV_NAV_SECTIONS } from './nav'
 import { CodeIcon } from '../icons'
+import SidebarUser from '../SidebarUser'
 
 function Mark() {
   return (
@@ -67,16 +68,7 @@ export default function DeveloperSidebar({ onNavigate }) {
         ))}
       </nav>
 
-      <div className="mx-3 flex items-center gap-3 rounded-xl border border-line bg-surface px-3 py-2.5">
-        <span className="grid h-9 w-9 place-items-center rounded-full bg-accent text-sm font-semibold text-[#1a0f00]">
-          DW
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-ink">Dana Walsh</p>
-          <p className="truncate text-xs text-ink-faint">Developer</p>
-        </div>
-        <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" title="Free" />
-      </div>
+      <SidebarUser accentClass="bg-accent text-[#1a0f00]" />
     </div>
   )
 }
