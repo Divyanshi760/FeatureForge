@@ -1,23 +1,32 @@
-import { ISSUES, PRIORITY_META, STATUS_META } from '../../data/issues'
-
-// Mock: current user is user-1 (Riya Sharma)
-const MY_REPORTS = ISSUES.filter((i) => i.reportedBy.id === 'user-1')
+import { PRIORITY_META, STATUS_META } from '../../data/issues'
+import { useAuth } from '../../context/AuthContext'
+import { useIssues } from '../../hooks/useIssues'
+import { Loading, ErrorState } from '../../components/AsyncState'
 
 export default function UserDashboard() {
-  const openCount = MY_REPORTS.filter((i) => i.status === 'open').length
-  const inProgressCount = MY_REPORTS.filter(
+  const { user } = useAuth()
+  const { issues, loading, error, reload } = useIssues()
+
+  const myReports = issues.filter((i) => i.reportedBy?.email === user?.email)
+  const openCount = myReports.filter((i) => i.status === 'open').length
+  const inProgressCount = myReports.filter(
     (i) => i.status === 'assigned' || i.status === 'in_progress'
   ).length
-  const resolvedCount = MY_REPORTS.filter(
+  const resolvedCount = myReports.filter(
     (i) => i.status === 'resolved' || i.status === 'closed'
   ).length
+
+  if (loading) return <Loading label="Loading your dashboard…" />
+  if (error) return <ErrorState message={error} onRetry={reload} />
+
+  const firstName = user?.name?.split(' ')[0] || 'there'
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       {/* Welcome */}
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-ink">
-          Welcome, Riya 👋
+          Welcome, {firstName} 👋
         </h1>
         <p className="text-sm text-ink-faint mt-1">
           Track your reported issues and their progress
@@ -46,13 +55,13 @@ export default function UserDashboard() {
       {/* Recent reports */}
       <div>
         <h2 className="text-lg font-semibold text-ink mb-4">Your Recent Reports</h2>
-        {MY_REPORTS.length === 0 ? (
+        {myReports.length === 0 ? (
           <div className="card px-6 py-12 text-center text-ink-faint">
             You haven't reported any issues yet.
           </div>
         ) : (
           <div className="space-y-3">
-            {MY_REPORTS.map((issue) => {
+            {myReports.map((issue) => {
               const pri = PRIORITY_META[issue.priority]
               const sta = STATUS_META[issue.status]
               return (

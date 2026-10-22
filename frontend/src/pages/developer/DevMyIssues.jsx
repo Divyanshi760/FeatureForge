@@ -1,19 +1,38 @@
 import { useState } from 'react'
-import { ISSUES, PRIORITY_META, STATUS_META } from '../../data/issues'
-
-// Mock: current developer is dev-1 (Dana Walsh)
-const MY_ISSUES = ISSUES.filter((i) => i.assignedTo?.id === 'dev-1')
+import { PRIORITY_META, STATUS_META } from '../../data/issues'
+import { useAuth } from '../../context/AuthContext'
+import { useIssues } from '../../hooks/useIssues'
+import { api } from '../../lib/api'
+import { Loading, ErrorState } from '../../components/AsyncState'
 
 const TABS = ['all', 'active', 'resolved']
 
 export default function MyIssues() {
+  const { user } = useAuth()
+  const { issues, setIssues, loading, error, reload } = useIssues()
   const [tab, setTab] = useState('all')
+  const [actionError, setActionError] = useState(null)
 
-  const filtered = MY_ISSUES.filter((i) => {
+  const myIssues = issues.filter((i) => i.assignedTo?.email === user?.email)
+
+  const updateStatus = async (issueId, status) => {
+    setActionError(null)
+    try {
+      const updated = await api.patch(`/issues/${issueId}/status`, { status })
+      setIssues((prev) => prev.map((i) => (i.id === issueId ? updated : i)))
+    } catch (err) {
+      setActionError(err.message)
+    }
+  }
+
+  const filtered = myIssues.filter((i) => {
     if (tab === 'active') return i.status === 'assigned' || i.status === 'in_progress'
     if (tab === 'resolved') return i.status === 'resolved' || i.status === 'closed'
     return true
   })
+
+  if (loading) return <Loading label="Loading your issues…" />
+  if (error) return <ErrorState message={error} onRetry={reload} />
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -27,9 +46,15 @@ export default function MyIssues() {
         </div>
         <div className="flex items-center gap-2 text-sm">
           <span className="text-ink-faint">Total:</span>
-          <span className="font-semibold text-ink">{MY_ISSUES.length} issues</span>
+          <span className="font-semibold text-ink">{myIssues.length} issues</span>
         </div>
       </div>
+
+      {actionError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          ✕ {actionError}
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-1.5 border-b border-line pb-0">
@@ -81,12 +106,18 @@ export default function MyIssues() {
                     {/* Action buttons */}
                     <div className="flex gap-2">
                       {issue.status === 'assigned' && (
-                        <button className="rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-[#1a0f00] hover:bg-accent-strong transition-colors">
+                        <button
+                          onClick={() => updateStatus(issue.id, 'in_progress')}
+                          className="rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-[#1a0f00] hover:bg-accent-strong transition-colors"
+                        >
                           Start Working
                         </button>
                       )}
                       {issue.status === 'in_progress' && (
-                        <button className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors">
+                        <button
+                          onClick={() => updateStatus(issue.id, 'resolved')}
+                          className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors"
+                        >
                           Mark Resolved
                         </button>
                       )}

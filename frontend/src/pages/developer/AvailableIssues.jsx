@@ -1,23 +1,45 @@
 import { useState } from 'react'
-import { ISSUES, PRIORITY_META } from '../../data/issues'
-
-// Open issues that no one has picked yet
-const AVAILABLE = ISSUES.filter((i) => i.status === 'open' && !i.assignedTo)
+import { PRIORITY_META } from '../../data/issues'
+import { useAuth } from '../../context/AuthContext'
+import { useIssues } from '../../hooks/useIssues'
+import { api } from '../../lib/api'
+import { Loading, ErrorState } from '../../components/AsyncState'
 
 export default function AvailableIssues() {
+  const { user } = useAuth()
+  const { issues, setIssues, loading, error, reload } = useIssues()
   const [search, setSearch] = useState('')
   const [priorityFilter, setPriorityFilter] = useState('all')
-  const [pickedIds, setPickedIds] = useState([])
+  const [actionError, setActionError] = useState(null)
 
-  const filtered = AVAILABLE.filter((i) => {
+  const developer = user && { id: user.id, name: user.name, email: user.email }
+
+  // Open issues nobody has picked or been assigned, and not already requested.
+  const available = issues.filter(
+    (i) => i.status === 'open' && !i.assignedTo && !i.selfPickRequest
+  )
+  const myRequests = issues.filter(
+    (i) => i.selfPickRequest?.requestedBy?.email === user?.email
+  )
+
+  const filtered = available.filter((i) => {
     const matchesSearch = i.title.toLowerCase().includes(search.toLowerCase())
     const matchesPriority = priorityFilter === 'all' || i.priority === priorityFilter
-    return matchesSearch && matchesPriority && !pickedIds.includes(i.id)
+    return matchesSearch && matchesPriority
   })
 
-  const handlePick = (issueId) => {
-    setPickedIds((prev) => [...prev, issueId])
+  const handlePick = async (issueId) => {
+    setActionError(null)
+    try {
+      const { issue } = await api.post(`/issues/${issueId}/self-pick`, { developer })
+      setIssues((prev) => prev.map((i) => (i.id === issueId ? issue : i)))
+    } catch (err) {
+      setActionError(err.message)
+    }
   }
+
+  if (loading) return <Loading label="Loading available issues…" />
+  if (error) return <ErrorState message={error} onRetry={reload} />
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -34,10 +56,16 @@ export default function AvailableIssues() {
         <span className="font-semibold">ℹ Note:</span> Self-picked issues require admin approval before you can start working on them.
       </div>
 
-      {/* Recently picked feedback */}
-      {pickedIds.length > 0 && (
+      {actionError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          ✕ {actionError}
+        </div>
+      )}
+
+      {/* Pending requests feedback */}
+      {myRequests.length > 0 && (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          ✓ You've requested {pickedIds.length} issue{pickedIds.length > 1 ? 's' : ''}. Waiting for admin approval.
+          ✓ You've requested {myRequests.length} issue{myRequests.length > 1 ? 's' : ''}. Waiting for admin approval.
         </div>
       )}
 
@@ -90,7 +118,7 @@ export default function AvailableIssues() {
                     <p className="font-semibold text-ink">{issue.title}</p>
                     <p className="text-sm text-ink-soft leading-relaxed">{issue.description}</p>
                     <div className="flex gap-4 text-xs text-ink-faint">
-                      <span>Reported by <span className="font-medium text-ink-soft">{issue.reportedBy.name}</span></span>
+                      <span>Reported by <span className="font-medium text-ink-soft">{issue.reportedBy?.name}</span></span>
                       <span>{new Date(issue.createdAt).toLocaleDateString()}</span>
                     </div>
                   </div>
