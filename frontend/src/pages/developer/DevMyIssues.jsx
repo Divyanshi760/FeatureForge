@@ -134,10 +134,15 @@ export default function MyIssues() {
                   <p className="text-sm text-ink-soft leading-relaxed">{issue.description}</p>
 
                   {/* Meta */}
-                  <div className="flex flex-wrap gap-4 text-xs text-ink-faint pt-1 border-t border-line">
-                    <span>Reported by <span className="font-medium text-ink-soft">{issue.reportedBy.name}</span></span>
-                    <span>Created {new Date(issue.createdAt).toLocaleDateString()}</span>
-                    <span>Updated {new Date(issue.updatedAt).toLocaleDateString()}</span>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-ink-faint pt-2 border-t border-line">
+                    <span>Reported by <span className="font-medium text-ink-soft">{issue.reportedBy?.name || 'Anonymous'}</span></span>
+                    <span className="inline-flex items-center gap-1 font-medium text-ink-soft bg-surface px-2 py-0.5 rounded border border-line">
+                      <span>🕒 Created:</span>
+                      <span>
+                        {new Date(issue.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} at {new Date(issue.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </span>
+                    <span>Updated {new Date(issue.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' })}</span>
                   </div>
                 </div>
               </div>

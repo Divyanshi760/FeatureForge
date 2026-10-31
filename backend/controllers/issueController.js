@@ -20,17 +20,73 @@ exports.list = async (req, res) => {
 exports.create = async (req, res) => {
   try {
     const { title, description, reportedBy } = req.body;
-    const count = await Issue.countDocuments();
+    if (!title?.trim() || !description?.trim()) {
+      return res.status(400).json({ message: 'Title and description are required' });
+    }
+
+    const cleanTitle = title.trim();
+    const cleanDesc = description.trim();
     const reporter = {
       id: reportedBy?.id || 'anon',
       name: reportedBy?.name || 'Anonymous User',
       email: reportedBy?.email || '',
     };
 
+    // Check if an open or active issue with the exact same title already exists
+    const existingIssue = await Issue.findOne({
+      title: { $regex: new RegExp(`^${cleanTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+      status: { $in: ['open', 'assigned', 'in_progress'] },
+    });
+
+    if (existingIssue) {
+      const alreadyReported =
+        reporter &&
+        existingIssue.reporters?.some(
+          (r) =>
+            (reporter.id && reporter.id !== 'anon' && r.id === reporter.id) ||
+            (reporter.email && r.email?.toLowerCase() === reporter.email?.toLowerCase())
+        );
+
+      if (alreadyReported) {
+        return res.status(409).json({
+          message: `An issue with this title already exists (${existingIssue.id}) and you have already reported it.`,
+          issue: existingIssue,
+        });
+      }
+
+      // Merge into existing issue and auto-escalate priority
+      existingIssue.reportCount += 1;
+      existingIssue.reporters.push({
+        id: reporter.id || 'anon',
+        name: reporter.name || 'Anonymous User',
+        email: reporter.email || '',
+        reportedAt: new Date(),
+      });
+      await existingIssue.save();
+
+      return res.status(200).json({
+        message: `An issue with this title already exists (${existingIssue.id}). Your report was merged and priority escalated to ${existingIssue.priority}!`,
+        issue: existingIssue,
+        merged: true,
+      });
+    }
+
+    // Safely generate the next sequential issue ID
+    const allIssues = await Issue.find({}, 'id');
+    let maxNum = 0;
+    for (const iss of allIssues) {
+      const match = iss.id?.match(/ISS-(\d+)/);
+      if (match) {
+        const n = parseInt(match[1], 10);
+        if (n > maxNum) maxNum = n;
+      }
+    }
+    const nextId = `ISS-${String(maxNum + 1).padStart(3, '0')}`;
+
     const issue = await Issue.create({
-      id: `ISS-${String(count + 1).padStart(3, '0')}`,
-      title,
-      description,
+      id: nextId,
+      title: cleanTitle,
+      description: cleanDesc,
       reportCount: 1,
       reporters: [reporter],
       reportedBy: reportedBy || { name: 'Anonymous User' },

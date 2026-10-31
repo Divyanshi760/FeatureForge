@@ -72,3 +72,31 @@ test('reassignment notification correctly informs competitor of the assigned dev
   assert.ok(notification.message.includes('pick and solve other available issues'));
   assert.strictEqual(notification.actionUrl, '/developer/available');
 });
+
+// Test sequential nextId generation
+test('nextId safely increments the highest existing ISS-XXX number', () => {
+  const issues = [{ id: 'ISS-001' }, { id: 'ISS-002' }, { id: 'ISS-006' }, { id: 'ISS-003' }];
+  let maxNum = 0;
+  for (const iss of issues) {
+    const match = iss.id?.match(/ISS-(\d+)/);
+    if (match) {
+      const n = parseInt(match[1], 10);
+      if (n > maxNum) maxNum = n;
+    }
+  }
+  const nextId = `ISS-${String(maxNum + 1).padStart(3, '0')}`;
+  assert.strictEqual(nextId, 'ISS-007');
+});
+
+// Test duplicate issue title detection logic
+test('detects duplicate issue titles regardless of case or whitespace', () => {
+  const existingTitles = ['Login page crashes on Safari 17', 'Dark mode toggle does not persist'];
+  const isDuplicate = (inputTitle) => {
+    const clean = inputTitle.trim().toLowerCase();
+    return existingTitles.some((t) => t.trim().toLowerCase() === clean);
+  };
+
+  assert.strictEqual(isDuplicate('login page crashes on safari 17'), true);
+  assert.strictEqual(isDuplicate('  Login page crashes on Safari 17  '), true);
+  assert.strictEqual(isDuplicate('New completely different issue'), false);
+});

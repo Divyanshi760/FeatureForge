@@ -240,9 +240,14 @@ export default function AvailableIssues() {
                     <p className="font-semibold text-ink text-base">{issue.title}</p>
                     <p className="text-sm text-ink-soft leading-relaxed">{issue.description}</p>
 
-                    <div className="flex gap-4 text-xs text-ink-faint pt-1">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-ink-faint pt-1">
                       <span>Reported by <span className="font-medium text-ink-soft">{issue.reportedBy?.name || 'User'}</span></span>
-                      <span>{new Date(issue.createdAt).toLocaleDateString()}</span>
+                      <span className="inline-flex items-center gap-1 font-medium text-ink-soft bg-surface px-2 py-0.5 rounded border border-line">
+                        <span>🕒 Created:</span>
+                        <span>
+                          {new Date(issue.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} at {new Date(issue.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </span>
                       <span>{issue.reportCount || 1} report{(issue.reportCount || 1) !== 1 ? 's' : ''}</span>
                     </div>
                   </div>
@@ -284,6 +289,9 @@ export default function AvailableIssues() {
             </h2>
             <p className="text-xs text-ink-faint mb-4">
               Issue <span className="font-semibold text-ink">{requestModal.issue.id}</span>: {requestModal.issue.title}
+              <span className="block mt-1 text-[0.72rem] text-ink-soft">
+                🕒 Reported {new Date(requestModal.issue.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} at {new Date(requestModal.issue.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
             </p>
 
             <form onSubmit={handleSubmitRequest} className="space-y-4">

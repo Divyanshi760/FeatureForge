@@ -171,8 +171,15 @@ export default function DeveloperDashboard() {
                       )}
                     </div>
                     <p className="font-medium text-ink truncate">{issue.title}</p>
-                    <p className="text-xs text-ink-faint mt-0.5">
-                      Reported by {issue.reportedBy?.name} · {new Date(issue.createdAt).toLocaleDateString()}
+                    <p className="text-xs text-ink-faint mt-1 flex items-center gap-2 flex-wrap">
+                      <span>Reported by {issue.reportedBy?.name || 'User'}</span>
+                      <span>·</span>
+                      <span className="inline-flex items-center gap-1 font-medium text-ink-soft">
+                        <span>🕒 Created:</span>
+                        <span>
+                          {new Date(issue.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} at {new Date(issue.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </span>
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -221,8 +228,15 @@ export default function DeveloperDashboard() {
                       </span>
                     </div>
                     <p className="font-medium text-ink truncate">{issue.title}</p>
-                    <p className="text-xs text-ink-faint mt-0.5">
-                      Reported by {issue.reportedBy?.name}
+                    <p className="text-xs text-ink-faint mt-1 flex items-center gap-2 flex-wrap">
+                      <span>Reported by {issue.reportedBy?.name || 'User'}</span>
+                      <span>·</span>
+                      <span className="inline-flex items-center gap-1 font-medium text-ink-soft">
+                        <span>🕒 Created:</span>
+                        <span>
+                          {new Date(issue.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} at {new Date(issue.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </span>
                     </p>
                   </div>
                   <button
