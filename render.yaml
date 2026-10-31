@@ -1,0 +1,19 @@
+# Render Blueprint for the FeatureForge backend API.
+# Deploy via Render Dashboard -> New -> Blueprint, pointing at this repo.
+services:
+  - type: web
+    name: featureforge-api
+    runtime: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      # Render injects PORT automatically; the server reads process.env.PORT.
+      - key: MONGO_URI
+        sync: false # set in dashboard (MongoDB Atlas connection string)
+      - key: JWT_SECRET
+        generateValue: true # Render generates a strong random value
+      - key: CORS_ORIGIN
+        sync: false # set to your Vercel URL, e.g. https://your-app.vercel.app

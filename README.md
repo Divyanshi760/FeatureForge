@@ -316,6 +316,53 @@ A full narrated walkthrough lives in **[DEMO.md](./DEMO.md)**: report, assign, a
 an issue; push a flag change through approval; trip the guarded rollback; and read the
 audit trail.
 
+## Deployment
+
+The app deploys as two services: the **backend** on [Render](https://render.com) and the
+**frontend** on [Vercel](https://vercel.com). You'll also need a managed MongoDB
+([MongoDB Atlas](https://www.mongodb.com/atlas) has a free tier).
+
+### 1. Database (MongoDB Atlas)
+
+Create a free cluster, add a database user, allow network access (`0.0.0.0/0` for a demo),
+and copy the connection string — it looks like
+`mongodb+srv://user:pass@cluster.mongodb.net/featureforge`.
+
+### 2. Backend (Render)
+
+The repo includes [`render.yaml`](./render.yaml) as a Blueprint.
+
+1. Render Dashboard → **New → Blueprint**, and select this repo.
+2. Set the env vars the blueprint marks as `sync: false`:
+   - `MONGO_URI` — your Atlas connection string
+   - `CORS_ORIGIN` — your Vercel URL (add it after step 3, e.g. `https://your-app.vercel.app`)
+   - `JWT_SECRET` is generated automatically; `PORT` is injected by Render.
+3. Deploy. The service exposes the API at `https://featureforge-api.onrender.com` (the `/`
+   route is the health check). To load demo data, open the service **Shell** and run
+   `npm run seed`.
+
+### 3. Frontend (Vercel)
+
+The frontend ships [`frontend/vercel.json`](./frontend/vercel.json) with the SPA rewrite.
+
+1. Vercel → **New Project**, import this repo, and set **Root Directory** to `frontend`.
+   Vercel auto-detects Vite (build `npm run build`, output `dist`).
+2. Add the env var:
+   - `VITE_API_URL` — your Render API URL **including `/api`**, e.g.
+     `https://featureforge-api.onrender.com/api`
+3. Deploy, then copy the resulting URL back into the backend's `CORS_ORIGIN` on Render and
+   redeploy the backend.
+
+### Required environment variables
+
+| Service  | Variable       | Notes                                                        |
+| -------- | -------------- | ------------------------------------------------------------ |
+| Backend  | `MONGO_URI`    | MongoDB Atlas connection string                              |
+| Backend  | `JWT_SECRET`   | Long random string (Render generates one)                    |
+| Backend  | `CORS_ORIGIN`  | Frontend origin(s), comma-separated; unset = allow all       |
+| Backend  | `PORT`/`HOST`  | Injected by Render; defaults to `5000` / `0.0.0.0` locally   |
+| Frontend | `VITE_API_URL` | Backend API base URL, must end in `/api`                     |
+
 ## Design notes & scope
 
 FeatureForge is built to demonstrate accountable governance, not to re-implement a

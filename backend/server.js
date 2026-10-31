@@ -10,7 +10,12 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
-app.use(cors());
+// Restrict CORS to the configured frontend origin(s) in production.
+// CORS_ORIGIN can be a comma-separated list; if unset, allow all origins.
+const corsOrigin = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
+  : '*';
+app.use(cors({ origin: corsOrigin }));
 app.use(express.json());
 
 // API health check
@@ -28,6 +33,8 @@ app.use('/api', apiRoutes);
 // Start server
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, '127.0.0.1', () => {
-  console.log(`Server running on http://127.0.0.1:${PORT}`);
+const HOST = process.env.HOST || '0.0.0.0';
+
+app.listen(PORT, HOST, () => {
+  console.log(`Server running on http://${HOST}:${PORT}`);
 });
