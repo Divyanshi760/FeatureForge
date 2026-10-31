@@ -25,6 +25,17 @@ export default function ReportIssue() {
     i.id.toLowerCase().includes(search.toLowerCase())
   )
 
+  const trimmedTitle = form.title.trim().toLowerCase()
+  const matchingExistingIssue =
+    trimmedTitle.length >= 3
+      ? visibleIssues.find(
+          (i) =>
+            i.title.toLowerCase().trim() === trimmedTitle ||
+            i.title.toLowerCase().includes(trimmedTitle) ||
+            trimmedTitle.includes(i.title.toLowerCase().trim())
+        )
+      : null
+
   const handleUpvote = async (issueId) => {
     const before = issues.find((i) => i.id === issueId)
     try {
@@ -46,20 +57,31 @@ export default function ReportIssue() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!form.title.trim() || !form.description.trim()) {
+      setFeedback({ type: 'error', msg: 'Please provide both title and description' })
+      return
+    }
+
     setSubmitting(true)
     try {
-      const created = await api.post('/issues', {
-        title: form.title,
-        description: form.description,
+      const res = await api.post('/issues', {
+        title: form.title.trim(),
+        description: form.description.trim(),
         reportedBy: reporter,
       })
-      setIssues((prev) => [created, ...prev])
+
+      if (res.merged) {
+        setIssues((prev) => prev.map((i) => (i.id === res.issue.id ? res.issue : i)))
+        setFeedback({ type: 'upvoted', msg: res.message })
+      } else {
+        setIssues((prev) => [res, ...prev])
+        setFeedback({ type: 'created', msg: `New issue ${res.id} created (priority: Low — 1 report)` })
+      }
       setForm({ title: '', description: '' })
-      setFeedback({ type: 'created', msg: `New issue ${created.id} created (priority: Low — 1 report)` })
-      setTimeout(() => setFeedback(null), 4000)
+      setTimeout(() => setFeedback(null), 5000)
     } catch (err) {
       setFeedback({ type: 'error', msg: err.message })
-      setTimeout(() => setFeedback(null), 4000)
+      setTimeout(() => setFeedback(null), 5000)
     } finally {
       setSubmitting(false)
     }
@@ -230,6 +252,37 @@ export default function ReportIssue() {
               placeholder="e.g. Login page crashes on Safari"
               className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink placeholder:text-ink-faint/50 focus:border-line-strong focus:outline-none focus:ring-2 focus:ring-ink/5 transition"
             />
+            {matchingExistingIssue && (
+              <div className="mt-2.5 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 flex items-center justify-between gap-3 animate-in fade-in duration-150">
+                <div className="min-w-0">
+                  <p className="font-semibold flex items-center gap-1.5">
+                    <span>⚠️ Similar issue already reported:</span>
+                    <span className="font-mono text-[0.7rem] bg-amber-200/70 px-1.5 py-0.5 rounded text-amber-900">
+                      {matchingExistingIssue.id}
+                    </span>
+                  </p>
+                  <p className="truncate text-ink-soft mt-0.5">
+                    {matchingExistingIssue.title} ({matchingExistingIssue.reportCount} report{matchingExistingIssue.reportCount !== 1 ? 's' : ''})
+                  </p>
+                  <p className="text-[0.72rem] text-amber-700 mt-1">
+                    Upvoting it increases its priority instead of creating a duplicate!
+                  </p>
+                </div>
+                {!hasVoted(matchingExistingIssue) ? (
+                  <button
+                    type="button"
+                    onClick={() => handleUpvote(matchingExistingIssue.id)}
+                    className="shrink-0 rounded-lg bg-amber-200 hover:bg-amber-300 px-3 py-1.5 font-semibold text-amber-900 text-xs transition-colors"
+                  >
+                    +1 Upvote Issue
+                  </button>
+                ) : (
+                  <span className="shrink-0 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-1 text-xs font-semibold">
+                    ✓ You already reported
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Description */}

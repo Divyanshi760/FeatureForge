@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { PRIORITY_META, STATUS_META } from '../data/issues'
 import { useIssues } from '../hooks/useIssues'
 import { api } from '../lib/api'
@@ -199,7 +200,14 @@ export default function IssuesManagement() {
                           <span className="grid h-6 w-6 place-items-center rounded-full bg-ink text-[0.6rem] font-semibold text-surface">
                             {issue.assignedTo.name.split(' ').map(n => n[0]).join('')}
                           </span>
-                          <span className="text-ink-soft text-xs">{issue.assignedTo.name}</span>
+                          <div>
+                            <span className="text-ink-soft text-xs block font-medium">{issue.assignedTo.name}</span>
+                            {(issue.estimatedDays || issue.assignedTo.estimatedDays) && (
+                              <span className="text-[0.68rem] text-amber-700 font-semibold">
+                                ⏱️ {issue.estimatedDays || issue.assignedTo.estimatedDays} {(issue.estimatedDays || issue.assignedTo.estimatedDays) === 1 ? 'day' : 'days'}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       ) : (
                         <span className="text-ink-faint text-xs italic">Unassigned</span>
@@ -207,16 +215,26 @@ export default function IssuesManagement() {
                     </td>
                     <td className="px-4 py-3.5">
                       {!issue.assignedTo && issue.status === 'open' ? (
-                        freeDevelopers.length > 0 ? (
-                          <button
-                            onClick={() => { setAssignModal(issue); setSelectedDev('') }}
-                            className="rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-[#1a0f00] hover:bg-accent-strong transition-colors"
-                          >
-                            Assign
-                          </button>
-                        ) : (
-                          <span className="text-xs text-ink-faint italic">No free devs</span>
-                        )
+                        <div className="flex items-center gap-2">
+                          {((issue.requests || []).filter(r => r.status === 'pending').length > 0 || issue.selfPickRequest?.requestedBy) ? (
+                            <Link
+                              to="/approval-queue"
+                              className="rounded-lg bg-accent/20 border border-accent/40 px-2.5 py-1 text-xs font-semibold text-accent-strong hover:bg-accent/30 transition-colors"
+                            >
+                              Review {Math.max(1, (issue.requests || []).filter(r => r.status === 'pending').length)} Request{((issue.requests || []).filter(r => r.status === 'pending').length) > 1 ? 's' : ''}
+                            </Link>
+                          ) : null}
+                          {freeDevelopers.length > 0 ? (
+                            <button
+                              onClick={() => { setAssignModal(issue); setSelectedDev('') }}
+                              className="rounded-lg bg-ink px-3 py-1.5 text-xs font-semibold text-surface hover:bg-[#26251f] transition-colors"
+                            >
+                              Direct Assign
+                            </button>
+                          ) : (
+                            <span className="text-xs text-ink-faint italic">No free devs</span>
+                          )}
+                        </div>
                       ) : issue.assignedTo ? (
                         <span className="text-xs text-ink-faint">
                           {issue.assignmentType === 'self_picked' ? 'Self-picked' : 'Assigned'}

@@ -11,7 +11,11 @@ export default function UserMyReports() {
   const { issues, loading, error, reload } = useIssues()
   const [tab, setTab] = useState('all')
 
-  const myReports = issues.filter((i) => i.reportedBy?.email === user?.email)
+  const myReports = issues.filter(
+    (i) =>
+      i.reportedBy?.email === user?.email ||
+      (i.reporters || []).some((r) => (user?.email && r.email === user?.email) || (user?.id && r.id === user?.id))
+  )
 
   const filtered = myReports.filter((i) => {
     if (tab === 'all') return true

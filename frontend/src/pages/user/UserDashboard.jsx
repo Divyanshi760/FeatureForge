@@ -7,7 +7,11 @@ export default function UserDashboard() {
   const { user } = useAuth()
   const { issues, loading, error, reload } = useIssues()
 
-  const myReports = issues.filter((i) => i.reportedBy?.email === user?.email)
+  const myReports = issues.filter(
+    (i) =>
+      i.reportedBy?.email === user?.email ||
+      (i.reporters || []).some((r) => (user?.email && r.email === user?.email) || (user?.id && r.id === user?.id))
+  )
   const openCount = myReports.filter((i) => i.status === 'open').length
   const inProgressCount = myReports.filter(
     (i) => i.status === 'assigned' || i.status === 'in_progress'

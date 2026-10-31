@@ -10,6 +10,7 @@ const Experiment = require('../models/Experiment');
 const AuditLog = require('../models/AuditLog');
 const Breakglass = require('../models/Breakglass');
 const Setting = require('../models/Setting');
+const Notification = require('../models/Notification');
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/featureforge';
 
@@ -30,6 +31,7 @@ async function seedDatabase() {
       AuditLog.deleteMany({}),
       Breakglass.deleteMany({}),
       Setting.deleteMany({}),
+      Notification.deleteMany({}),
     ]);
     console.log('Collections cleared.');
 
@@ -110,8 +112,25 @@ async function seedDatabase() {
         assignedTo: null,
         assignmentType: null,
         adminApproved: false,
+        requests: [
+          {
+            developer: { id: 'dev-4', name: 'Priya Menon', email: 'priya@example.com' },
+            estimatedDays: 2,
+            note: 'I can refactor the middleware and add test coverage in 2 days.',
+            requestedAt: new Date('2026-10-22T14:30:00Z'),
+            status: 'pending',
+          },
+          {
+            developer: { id: 'dev-2', name: 'Sam Reyes', email: 'sam@example.com' },
+            estimatedDays: 4,
+            note: 'Need to inspect the Redis rate limiter cluster configuration.',
+            requestedAt: new Date('2026-10-22T15:10:00Z'),
+            status: 'pending',
+          },
+        ],
         selfPickRequest: {
           requestedBy: { id: 'dev-4', name: 'Priya Menon', email: 'priya@example.com' },
+          estimatedDays: 2,
           requestedAt: new Date('2026-10-22T14:30:00Z'),
         },
         createdAt: new Date('2026-10-22T08:45:00Z'),
