@@ -11,6 +11,12 @@ const ROLES = [
 
 const HOME_BY_ROLE = { admin: "/dashboard", developer: "/developer", user: "/user" };
 
+const DEMO_ACCOUNTS = {
+  admin: { email: "admin@gmail.com", password: "password123" },
+  developer: { email: "dana@example.com", password: "password123" },
+  user: { email: "riya@example.com", password: "password123" },
+};
+
 export default function Login() {
   const [role, setRole] = useState("admin");
   const [email, setEmail] = useState("");

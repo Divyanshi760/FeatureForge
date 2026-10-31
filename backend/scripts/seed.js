@@ -38,6 +38,7 @@ async function seedDatabase() {
     console.log('Seeding users...');
     const users = [
       { name: 'Administrator', email: 'admin@gmail.com', password: 'password123', role: 'admin', avatar: 'AD', status: 'active', owner: true, scope: 'Project-wide' },
+      { name: 'System Admin', email: 'admin@example.com', password: 'password123', role: 'admin', avatar: 'SA', status: 'active', owner: true, scope: 'Project-wide' },
       { name: 'Ada Ofori', email: 'ada@example.com', password: 'password123', role: 'admin', avatar: 'AO', status: 'active', owner: false, scope: 'Project-wide' },
       { name: 'Xavier Yung', email: 'xyz@example.com', password: 'password123', role: 'admin', avatar: 'XY', status: 'active', owner: false, scope: 'Project-wide' },
 
