@@ -103,7 +103,11 @@ export default function Login() {
               <button
                 key={r.key}
                 type="button"
-                onClick={() => setRole(r.key)}
+                onClick={() => {
+                  setRole(r.key);
+                  setEmail(DEMO_ACCOUNTS[r.key].email);
+                  setPassword(DEMO_ACCOUNTS[r.key].password);
+                }}
                 className={`flex-1 rounded-xl px-3 py-3 text-center transition-all border ${
                   role === r.key
                     ? `${r.color} border-transparent shadow-sm scale-[1.02]`

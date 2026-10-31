@@ -36,12 +36,14 @@ export function useNotifications() {
   }, [fetchNotifications]);
 
   const markAsRead = async (id) => {
+    // Only an unread notification should lower the badge count.
+    const wasUnread = notifications.some((n) => n._id === id && !n.read);
     try {
       await api.patch(`/notifications/${id}/read`);
       setNotifications((prev) =>
         prev.map((n) => (n._id === id ? { ...n, read: true } : n))
       );
-      setUnreadCount((c) => Math.max(0, c - 1));
+      if (wasUnread) setUnreadCount((c) => Math.max(0, c - 1));
     } catch (err) {
       console.error('Failed to mark notification as read:', err);
     }
