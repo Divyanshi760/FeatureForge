@@ -1,4 +1,5 @@
 const Experiment = require('../models/Experiment');
+const { nextSeq } = require('../lib/audit');
 
 exports.list = async (req, res) => {
   try {
@@ -16,10 +17,10 @@ exports.create = async (req, res) => {
       return res.status(400).json({ message: 'name, flag, key and metric are required' });
     }
 
-    const count = await Experiment.countDocuments();
+    const seq = await nextSeq(Experiment, 'EXP');
     const sample = minSampleSize || 5000;
     const experiment = await Experiment.create({
-      id: `EXP-${count + 1}`,
+      id: `EXP-${seq}`,
       name,
       flag,
       key,

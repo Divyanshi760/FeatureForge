@@ -457,13 +457,24 @@ exports.rejectSelfPick = async (req, res) => {
 exports.updateStatus = async (req, res) => {
   try {
     const { status } = req.body;
+    const allowed = ['open', 'assigned', 'in_progress', 'resolved', 'closed'];
+    if (!allowed.includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
     const issue = await Issue.findOne({ id: req.params.id });
     if (!issue) return res.status(404).json({ message: 'Issue not found' });
 
+    const prevStatus = issue.status;
     issue.status = status;
     await issue.save();
 
-    if ((status === 'resolved' || status === 'closed') && issue.assignedTo) {
+    // Only adjust the developer's metrics on the first transition into a
+    // terminal state, so resolved -> closed (or a repeated resolve) can't
+    // decrement activeIssues twice or inflate resolvedTotal.
+    const wasTerminal = prevStatus === 'resolved' || prevStatus === 'closed';
+    const isTerminal = status === 'resolved' || status === 'closed';
+    if (isTerminal && !wasTerminal && issue.assignedTo) {
       await User.findOneAndUpdate(
         { $or: [{ email: issue.assignedTo.email }, { name: issue.assignedTo.name }] },
         { status: 'free', currentIssue: null, $inc: { activeIssues: -1, resolvedTotal: 1 } }

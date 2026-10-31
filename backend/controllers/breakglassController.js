@@ -1,5 +1,5 @@
 const Breakglass = require('../models/Breakglass');
-const { writeAudit } = require('../lib/audit');
+const { writeAudit, nextSeq } = require('../lib/audit');
 
 exports.list = async (req, res) => {
   try {
@@ -20,10 +20,10 @@ exports.request = async (req, res) => {
 
     const actor = req.user.email;
     const now = Date.now();
-    const count = await Breakglass.countDocuments();
+    const seq = await nextSeq(Breakglass, 'BG');
 
     const session = await Breakglass.create({
-      id: `BG-${count + 1}`,
+      id: `BG-${seq}`,
       user: actor,
       flag,
       key,

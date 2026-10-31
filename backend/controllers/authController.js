@@ -20,6 +20,9 @@ const signToken = (user) =>
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
     const user = await User.findOne({ email: email.toLowerCase().trim() });
 
     if (!user || !(await user.comparePassword(password))) {
@@ -46,6 +49,9 @@ exports.login = async (req, res) => {
 exports.register = async (req, res) => {
   try {
     const { name, email, password, role, specialty } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Name, email and password are required' });
+    }
     const normalizedEmail = email.toLowerCase().trim();
 
     if (await User.findOne({ email: normalizedEmail })) {

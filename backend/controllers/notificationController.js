@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Notification = require('../models/Notification');
 
 // List notifications for the authenticated user
@@ -25,6 +26,9 @@ exports.list = async (req, res) => {
 // Mark a single notification as read
 exports.markRead = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
     const notification = await Notification.findById(req.params.id);
     if (!notification) {
       return res.status(404).json({ message: 'Notification not found' });
@@ -61,6 +65,9 @@ exports.markAllRead = async (req, res) => {
 // Clear a notification
 exports.deleteNotification = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
     const notification = await Notification.findById(req.params.id);
     if (!notification) {
       return res.status(404).json({ message: 'Notification not found' });

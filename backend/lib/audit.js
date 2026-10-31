@@ -15,10 +15,22 @@ const AuditLog = require('../models/AuditLog');
  * @param {boolean} [entry.system]
  * @param {string} [entry.note]
  */
+// Derive the next sequential number from the highest existing id rather than the
+// document count, so a deleted row can't cause a duplicate-key collision.
+async function nextSeq(Model, prefix) {
+  const rows = await Model.find({}, 'id').lean();
+  let max = 0;
+  for (const r of rows) {
+    const m = r.id?.match(new RegExp(`^${prefix}-(\\d+)$`));
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  }
+  return max + 1;
+}
+
 async function writeAudit({ action, actor, flag, key, env = 'prod', summary = '', diff = [], system = false, note = '' }) {
-  const count = await AuditLog.countDocuments();
+  const seq = await nextSeq(AuditLog, 'AUD');
   return AuditLog.create({
-    id: `AUD-${String(count + 1).padStart(4, '0')}`,
+    id: `AUD-${String(seq).padStart(4, '0')}`,
     action,
     actor,
     system,
@@ -31,4 +43,4 @@ async function writeAudit({ action, actor, flag, key, env = 'prod', summary = ''
   });
 }
 
-module.exports = { writeAudit };
+module.exports = { writeAudit, nextSeq };
