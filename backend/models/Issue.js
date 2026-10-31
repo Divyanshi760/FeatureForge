@@ -70,10 +70,41 @@ const issueSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    estimatedDays: {
+      type: Number,
+      default: null,
+    },
     selfPickRequest: {
       type: mongoose.Schema.Types.Mixed,
       default: null,
     },
+    requests: [
+      {
+        developer: {
+          id: String,
+          name: String,
+          email: String,
+        },
+        estimatedDays: {
+          type: Number,
+          required: true,
+          min: 1,
+        },
+        note: {
+          type: String,
+          default: '',
+        },
+        requestedAt: {
+          type: Date,
+          default: Date.now,
+        },
+        status: {
+          type: String,
+          enum: ['pending', 'assigned', 'rejected'],
+          default: 'pending',
+        },
+      },
+    ],
   },
   {
     timestamps: true,

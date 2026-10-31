@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import DeveloperSidebar from './DeveloperSidebar'
+import NotificationBell from '../NotificationBell'
 
 export default function DeveloperLayout() {
   const [open, setOpen] = useState(false)
@@ -44,6 +45,8 @@ export default function DeveloperLayout() {
             <span className="text-sm font-semibold text-ink-faint uppercase tracking-wider">Developer Portal</span>
 
             <div className="flex-1" />
+
+            <NotificationBell />
 
             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />

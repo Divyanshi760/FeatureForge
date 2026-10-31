@@ -101,6 +101,11 @@ export default function MyIssues() {
                           Self-picked
                         </span>
                       )}
+                      {(issue.estimatedDays || issue.assignedTo?.estimatedDays) && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 border border-amber-200">
+                          ⏱️ Target: {issue.estimatedDays || issue.assignedTo?.estimatedDays} {(issue.estimatedDays || issue.assignedTo?.estimatedDays) === 1 ? 'day' : 'days'}
+                        </span>
+                      )}
                     </div>
 
                     {/* Action buttons */}

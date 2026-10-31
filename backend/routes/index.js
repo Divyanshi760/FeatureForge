@@ -11,5 +11,6 @@ router.use('/breakglass', require('./breakglass'));
 router.use('/experiments', require('./experiments'));
 router.use('/rollouts', require('./rollouts'));
 router.use('/settings', require('./settings'));
+router.use('/notifications', require('./notifications'));
 
 module.exports = router;

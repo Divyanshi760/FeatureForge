@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import {
   SearchIcon,
-  BellIcon,
   PlusIcon,
   ChevronDownIcon,
   LayersIcon,
 } from '../icons'
+import NotificationBell from '../NotificationBell'
 
 const ENVS = ['dev', 'staging', 'prod']
 
@@ -70,14 +70,7 @@ export default function Topbar({ onMenu }) {
         </div>
 
         {/* Notifications */}
-        <button
-          type="button"
-          className="relative grid h-10 w-10 place-items-center rounded-full border border-line bg-surface text-ink-soft transition-colors hover:text-ink"
-          aria-label="Notifications"
-        >
-          <BellIcon className="h-[1.15rem] w-[1.15rem]" />
-          <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-accent ring-2 ring-surface" />
-        </button>
+        <NotificationBell />
 
         {/* Primary action */}
         <button type="button" className="btn-accent py-2.5">
