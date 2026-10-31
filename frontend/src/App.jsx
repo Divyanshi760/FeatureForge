@@ -32,6 +32,7 @@ import UserLayout from './components/user/UserLayout'
 import UserDashboard from './pages/user/UserDashboard'
 import ReportIssue from './pages/user/ReportIssue'
 import UserMyReports from './pages/user/UserMyReports'
+import UserProfile from './pages/user/UserProfile'
 
 
 // Dashboard routes that have a real page built. Everything else in the nav
@@ -101,6 +102,7 @@ export default function App() {
           <Route path="/user" element={<UserDashboard />} />
           <Route path="/user/report" element={<ReportIssue />} />
           <Route path="/user/my-reports" element={<UserMyReports />} />
+          <Route path="/user/profile" element={<UserProfile />} />
         </Route>
       </Route>
     </Routes>
