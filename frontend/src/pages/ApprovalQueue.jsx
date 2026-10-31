@@ -65,7 +65,7 @@ export default function ApprovalQueue() {
       {/* Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-ink">Professor Review & Approvals</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">Admin Review & Approvals</h1>
           <p className="text-sm text-ink-faint mt-1">
             Compare developer timeline estimates (days to solve) and assign issues. Other applicants will be notified automatically.
           </p>

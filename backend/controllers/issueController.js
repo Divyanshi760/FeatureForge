@@ -358,7 +358,7 @@ exports.approveSelfPick = async (req, res) => {
         },
         type: 'issue_assigned',
         title: `Assigned: ${issue.id} - ${issue.title}`,
-        message: `Your request was approved by the professor. Target completion: ${
+        message: `Your request was approved by the admin. Target completion: ${
           estimatedDays ? `${estimatedDays} day${estimatedDays > 1 ? 's' : ''}` : 'As scheduled'
         }. Happy coding!`,
         issueId: issue.id,
@@ -406,7 +406,7 @@ exports.rejectSelfPick = async (req, res) => {
             },
             type: 'self_pick_rejected',
             title: `Request Declined for ${issue.id}`,
-            message: `Your request for "${issue.title}" was not approved by the professor. You can pick and solve other available issues from the pool!`,
+            message: `Your request for "${issue.title}" was not approved by the admin. You can pick and solve other available issues from the pool!`,
             issueId: issue.id,
             issueTitle: issue.title,
             actionUrl: '/developer/available',
@@ -426,7 +426,7 @@ exports.rejectSelfPick = async (req, res) => {
             },
             type: 'self_pick_rejected',
             title: `Request Declined for ${issue.id}`,
-            message: `Your request for "${issue.title}" was not approved by the professor. You can pick and solve other available issues from the pool!`,
+            message: `Your request for "${issue.title}" was not approved by the admin. You can pick and solve other available issues from the pool!`,
             issueId: issue.id,
             issueTitle: issue.title,
             actionUrl: '/developer/available',
