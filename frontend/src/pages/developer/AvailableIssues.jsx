@@ -82,7 +82,7 @@ export default function AvailableIssues() {
       )
       setFeedback({
         type: 'success',
-        msg: `Request submitted for ${requestModal.issue.id} with ${days} day${days > 1 ? 's' : ''} estimate. Waiting for professor approval.`,
+        msg: `Request submitted for ${requestModal.issue.id} with ${days} day${days > 1 ? 's' : ''} estimate. Waiting for admin approval.`,
       })
       setRequestModal(null)
       setTimeout(() => setFeedback(null), 5000)
@@ -102,7 +102,7 @@ export default function AvailableIssues() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-ink">Available Issues</h1>
         <p className="text-sm text-ink-faint mt-1">
-          Browse open issues and specify the estimated number of days you'll take to solve. Professor approval required.
+          Browse open issues and specify the estimated number of days you'll take to solve. Admin approval required.
         </p>
       </div>
 
@@ -141,7 +141,7 @@ export default function AvailableIssues() {
       <div className="rounded-xl border border-line bg-surface/70 px-4 py-3 text-sm text-ink-soft flex items-center gap-2">
         <span className="text-accent-strong font-bold">ℹ</span>
         <span>
-          <strong>Professor requirement:</strong> Please provide realistic estimated days when requesting an issue. If multiple developers request the same issue, the professor will assign one developer and other applicants will be notified to pick other tasks.
+          <strong>Admin requirement:</strong> Please provide realistic estimated days when requesting an issue. If multiple developers request the same issue, the admin will assign one developer and other applicants will be notified to pick other tasks.
         </span>
       </div>
 
@@ -161,7 +161,7 @@ export default function AvailableIssues() {
       {myRequests.length > 0 && (
         <div className="rounded-xl border border-blue-200 bg-blue-50/70 px-4 py-3 text-sm text-blue-800 flex items-center justify-between flex-wrap gap-2">
           <span>
-            📋 You have <strong>{myRequests.length}</strong> active request{myRequests.length > 1 ? 's' : ''} awaiting professor review.
+            📋 You have <strong>{myRequests.length}</strong> active request{myRequests.length > 1 ? 's' : ''} awaiting admin review.
           </span>
           <span className="text-xs text-blue-600 font-medium">
             You can still request additional issues or adjust your estimates anytime.
@@ -317,7 +317,7 @@ export default function AvailableIssues() {
                   </span>
                 </div>
                 <p className="text-[0.75rem] text-ink-faint mt-1.5">
-                  The professor considers this timeline when assigning the issue to developers.
+                  The admin considers this timeline when assigning the issue to developers.
                 </p>
               </div>
 
@@ -338,7 +338,7 @@ export default function AvailableIssues() {
 
               {/* Notice callout */}
               <div className="rounded-xl border border-accent/30 bg-accent/10 p-3 text-xs text-ink-soft leading-relaxed">
-                <strong>Fair Allocation:</strong> If another developer is also requesting this issue, the professor will assign one developer based on estimates and availability. If another developer is assigned, you'll immediately receive a notification so you can pick other issues.
+                <strong>Fair Allocation:</strong> If another developer is also requesting this issue, the admin will assign one developer based on estimates and availability. If another developer is assigned, you'll immediately receive a notification so you can pick other issues.
               </div>
 
               {actionError && (
