@@ -153,7 +153,7 @@ export default function Rollouts() {
     try {
       const { rollout } = await api.post(`/rollouts/${r.id}/rollback`, {})
       setRollouts((prev) => prev.map((x) => (x.id === rollout.id ? rollout : x)))
-      setAlert(`Auto-rollback fired on ${rollout.flag}. The flag was disabled and pushed to every SDK.`)
+      setAlert(`Auto-rollback fired on ${rollout.flag}. The flag was disabled and the rollout dropped to zero.`)
       setToast(null)
     } catch (err) {
       setToast(err.message)

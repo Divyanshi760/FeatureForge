@@ -299,7 +299,7 @@ export default function Approvals() {
                     <XIcon className="h-4 w-4" />
                   )}
                   {selected.status === 'approved'
-                    ? 'Approved and applied. The config was pushed to every SDK.'
+                    ? 'Approved and applied.'
                     : 'Rejected. No change was applied.'}
                 </div>
               ) : eligible(selected) ? (

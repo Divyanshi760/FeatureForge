@@ -45,8 +45,8 @@ export default function ReportIssue() {
       setFeedback({
         type: 'upvoted',
         msg: escalated
-          ? `Reported ${issueId} — priority escalated to ${PRIORITY_META[updated.priority].label} (${updated.reportCount} reports)`
-          : `Reported ${issueId} — now ${updated.reportCount} reports`,
+          ? `Reported ${issueId}. Priority escalated to ${PRIORITY_META[updated.priority].label} (${updated.reportCount} reports)`
+          : `Reported ${issueId}. Now ${updated.reportCount} reports`,
       })
       setTimeout(() => setFeedback(null), 4000)
     } catch (err) {
@@ -75,7 +75,7 @@ export default function ReportIssue() {
         setFeedback({ type: 'upvoted', msg: res.message })
       } else {
         setIssues((prev) => [res, ...prev])
-        setFeedback({ type: 'created', msg: `New issue ${res.id} created (priority: Low — 1 report)` })
+        setFeedback({ type: 'created', msg: `New issue ${res.id} created (priority: Low, 1 report)` })
       }
       setForm({ title: '', description: '' })
       setTimeout(() => setFeedback(null), 5000)

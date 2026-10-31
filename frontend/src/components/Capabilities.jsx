@@ -11,7 +11,7 @@ const CAPS = [
   {
     icon: FlagIcon,
     title: 'Feature flags',
-    body: 'Release, Experiment, Ops and Permission flags with deterministic, sticky targeting the SDK evaluates locally.',
+    body: 'Release, Experiment, Ops and Permission flags, each with an on/off state and a rollout percentage you control.',
   },
   {
     icon: ShieldIcon,
@@ -21,12 +21,12 @@ const CAPS = [
   {
     icon: BeakerIcon,
     title: 'Experiments',
-    body: 'Turn any flag into an experiment. Z-test and chi-square with sample gating and a fixed evaluation horizon.',
+    body: 'Turn any flag into an experiment and track exposures and conversions per variant, gated by sample size and a fixed horizon.',
   },
   {
     icon: GaugeIcon,
-    title: 'Guarded rollouts',
-    body: 'Rolling-window health checks watch variant vs control and disable the flag automatically on repeated breach.',
+    title: 'Guarded rollback',
+    body: 'When a metric breaches, one guarded action disables the flag, drops the rollout to zero, and records why.',
   },
   {
     icon: KeyIcon,
@@ -49,9 +49,9 @@ export default function Capabilities() {
           One loop, closed end to end
         </h2>
         <p className="mt-5 text-lg leading-relaxed text-ink-soft">
-          Shipping code, controlling exposure, measuring impact, and protecting
-          production. Most tools handle one of these. FeatureForge handles all
-          four, on infrastructure you host.
+          Controlling exposure, reviewing every change, measuring impact, and
+          protecting production. FeatureForge brings these together in one
+          governed workflow.
         </p>
       </div>
 

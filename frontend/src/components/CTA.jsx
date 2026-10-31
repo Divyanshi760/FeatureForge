@@ -20,8 +20,8 @@ export default function CTA() {
             Control the release.
           </h2>
           <p className="mx-auto mt-6 max-w-lg text-lg leading-relaxed text-[#c9c5bd]">
-            Bring deploy, exposure, impact, and safety together in one place,
-            running on infrastructure you own.
+            Bring exposure, review, impact, and rollback together in one
+            governed workflow.
           </p>
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <a href="#top" className="btn-accent px-6 py-3">

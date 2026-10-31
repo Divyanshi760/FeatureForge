@@ -83,7 +83,7 @@ function ExperimentVisual() {
       <div className="flex items-center justify-between">
         <p className="eyebrow">Experiment · signup-cta</p>
         <span className="rounded-full bg-[#e6f6ec] px-2.5 py-1 text-xs font-semibold text-[#2e8b57]">
-          Significant
+          Tracking
         </span>
       </div>
       <div className="mt-5 grid grid-cols-2 gap-4">
@@ -107,9 +107,9 @@ function ExperimentVisual() {
       </div>
       <div className="mt-4 grid grid-cols-3 gap-3 text-center">
         {[
-          ['p-value', '0.012'],
+          ['Exposures', '18.4k'],
+          ['Conversions', '970'],
           ['Lift', '+29%'],
-          ['Samples', '18.4k'],
         ].map(([k, val]) => (
           <div key={k} className="rounded-lg bg-canvas py-2.5">
             <div className="text-sm font-semibold text-ink">{val}</div>
@@ -177,27 +177,27 @@ export default function FeatureSections() {
         <Row
           id="experiments"
           eyebrow="Experimentation"
-          title="Know what a feature really did"
-          body="Tie a flag’s variants to a metric and the stats engine takes it from there. Results stay directional until you reach the sample size and the horizon you set up front, so checking early never inflates your false positives."
+          title="See what each variant did"
+          body="Tie a flag's variants to a metric and track exposures and conversions for each one. Results stay directional until you reach the sample size and the horizon you set up front, so an early read never gets mistaken for a result."
           bullets={[
-            'Two-proportion z-test and chi-square for multivariate',
-            'Confidence intervals and p-values, not guesses',
-            'Minimum-sample gating with an “insufficient data” state',
-            'Fixed evaluation horizon to prevent repeated peeking',
+            'Per-variant exposure and conversion tracking',
+            'Sample-size gating with an insufficient-data state',
+            'A fixed evaluation horizon set up front',
+            'Results stay directional until the horizon is met',
           ]}
           visual={<ExperimentVisual />}
           reverse
         />
         <Row
           id="rollouts"
-          eyebrow="Guarded rollouts"
-          title="Contain the damage in minutes, not hours"
-          body="A rolling-window job compares variant health against the control. Cross the threshold for N windows in a row and FeatureForge disables the flag, logs it separately, alerts your channel, and pushes the new config to every SDK. Nobody has to be watching for it to happen."
+          eyebrow="Guarded rollback"
+          title="Contain the damage in one action"
+          body="When a metric breaches its threshold, trigger the guarded rollback from the rollouts view. FeatureForge disables the flag, drops the rollout to zero, records the reason on the rollout, and writes it to the audit log as an auto-rollback."
           bullets={[
-            'Rolling-window evaluation with per-window sample gating',
-            'Consecutive-breach counting with configurable thresholds',
-            'Auto-rollback tagged distinctly in the audit log',
-            'Instant SSE config push to every connected client',
+            'Drops the rollout to zero and disables the flag',
+            'Reason recorded on the rollout and in the audit log',
+            'Auto-rollback tagged distinctly from manual changes',
+            'One guarded action from the rollouts view',
           ]}
           visual={<RolloutVisual />}
         />

@@ -3,19 +3,19 @@ import Logo from './Logo'
 const COLUMNS = [
   {
     heading: 'Product',
-    links: ['Feature flags', 'Governance', 'Experiments', 'Guarded rollouts', 'SDK'],
+    links: ['Feature flags', 'Governance', 'Experiments', 'Guarded rollback', 'Audit log'],
   },
   {
     heading: 'Platform',
-    links: ['Audit log', 'RBAC', 'Break-glass', 'Webhooks', 'Self-hosting'],
+    links: ['Approvals', 'Break-glass', 'Roles', 'Issues', 'Notifications'],
   },
   {
     heading: 'Resources',
-    links: ['Docs', 'Integration guide', 'API reference', 'Changelog', 'Status'],
+    links: ['README', 'Demo guide', 'API reference', 'Changelog'],
   },
   {
     heading: 'Company',
-    links: ['About', 'Blog', 'Careers', 'Security', 'Contact'],
+    links: ['About', 'Security', 'Contact'],
   },
 ]
 
@@ -27,8 +27,8 @@ export default function Footer() {
           <div>
             <Logo />
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-soft">
-              A self-hosted release management platform. Ship the code, control
-              the release.
+              A feature-flag governance app. Ship the code, control the
+              release.
             </p>
           </div>
 

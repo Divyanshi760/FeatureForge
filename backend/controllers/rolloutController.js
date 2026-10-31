@@ -30,7 +30,7 @@ exports.simulateRollback = async (req, res) => {
         reason:
           req.body?.reason ||
           `${m.label || 'Metric'} breached the ${m.threshold ?? ''}${m.unit || ''} threshold for ${m.windowsToRollback || 2} consecutive windows.`,
-        detail: 'The flag was disabled and the new config pushed to every SDK.',
+        detail: 'The flag was disabled and the rollout dropped to zero.',
       },
       ...rollout.rollbacks,
     ];

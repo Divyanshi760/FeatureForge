@@ -158,7 +158,7 @@ export default function Dashboard() {
               <div>
                 <p className="font-semibold text-[#7d2018]">Auto-rollback fired on {lastRollback.flag}</p>
                 <p className="mt-0.5 text-sm text-[#95443b]">
-                  {lastRollback.summary || 'The flag was disabled and the new config pushed to every SDK.'}
+                  {lastRollback.summary || 'The flag was disabled and the rollout dropped to zero.'}
                 </p>
               </div>
             </div>

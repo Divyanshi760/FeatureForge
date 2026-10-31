@@ -244,7 +244,7 @@ async function seedDatabase() {
           {
             at: '18m ago',
             reason: 'Error rate hit 4.8% against control at 0.9%, over the 3.0% threshold for two windows in a row.',
-            detail: 'The flag was disabled and the new config pushed to every SDK.',
+            detail: 'The flag was disabled and the rollout dropped to zero.',
           },
         ],
       },
@@ -388,7 +388,7 @@ async function seedDatabase() {
         day: 'Today',
         at: '09:12',
         when: '18m ago',
-        summary: 'Error rate crossed the threshold for 2 consecutive windows. Flag disabled and pushed to every SDK.',
+        summary: 'Error rate crossed the threshold for 2 consecutive windows. Flag disabled and rollout dropped to zero.',
         diff: [
           { field: 'state', before: 'on', after: 'off' },
           { field: 'rolloutPercent', before: '35', after: '0' },

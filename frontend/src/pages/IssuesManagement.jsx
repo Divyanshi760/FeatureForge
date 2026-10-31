@@ -263,7 +263,7 @@ export default function IssuesManagement() {
           <div className="relative w-full max-w-md rounded-2xl border border-line bg-panel p-6 shadow-2xl">
             <h2 className="text-lg font-semibold text-ink mb-1">Assign Developer</h2>
             <p className="text-sm text-ink-faint mb-1">
-              Issue: <span className="font-medium text-ink">{assignModal.id} — {assignModal.title}</span>
+              Issue: <span className="font-medium text-ink">{assignModal.id} · {assignModal.title}</span>
             </p>
             <p className="text-xs text-ink-faint mb-4">
               {assignModal.reportCount} report{assignModal.reportCount !== 1 ? 's' : ''} · Priority auto-set to <span className="font-semibold">{PRIORITY_META[assignModal.priority].label}</span>

@@ -1,23 +1,23 @@
-import { BranchIcon, BeakerIcon, ShieldIcon } from './icons'
+import { BranchIcon, ShieldIcon, GaugeIcon } from './icons'
 
 const STEPS = [
   {
     icon: BranchIcon,
     step: '01',
-    title: 'Deterministic targeting',
-    body: 'The SDK checks rules locally against a cached ruleset (eq, in, contains, gt/lt, semver, regex), then buckets each user with a stable hash. The same user always gets the same variant.',
-  },
-  {
-    icon: BeakerIcon,
-    step: '02',
-    title: 'Statistical rigor',
-    body: 'Exposure and conversion events stream back in batches. The stats engine gates on sample size and a fixed horizon before it ever calls a winner.',
+    title: 'Propose a change',
+    body: 'Any change to a governed flag becomes a change request with a before and after diff, instead of a live edit. Ops flags stay fast where speed matters.',
   },
   {
     icon: ShieldIcon,
+    step: '02',
+    title: 'Review and approve',
+    body: 'A second reviewer signs off before the change applies. Break-glass is there for real emergencies, time-boxed and recorded.',
+  },
+  {
+    icon: GaugeIcon,
     step: '03',
-    title: 'Automatic protection',
-    body: 'Health metrics feed a rolling-window guard. When a rollout misbehaves past the threshold, it’s reversed and recorded before anyone opens a dashboard.',
+    title: 'Roll back when needed',
+    body: 'If a rollout misbehaves, the guarded rollback disables the flag, zeroes the rollout, and writes it to the audit log as an auto-rollback.',
   },
 ]
 
@@ -27,12 +27,12 @@ export default function HowItWorks() {
       <div className="mx-auto max-w-2xl text-center">
         <p className="eyebrow">How it works</p>
         <h2 className="display mt-4 text-4xl text-ink md:text-5xl">
-          Specialised where it counts
+          From proposal to rollback
         </h2>
         <p className="mt-5 text-lg leading-relaxed text-ink-soft">
-          A single Express backend serves a JWT-authed management API and an
-          env-scoped SDK API. Your app evaluates flags in-process, so there is
-          no round trip on the hot path.
+          A React dashboard talks to a single Express and MongoDB backend over a
+          JWT-authed API. Admins, developers, and users each get a role-scoped
+          view of the same governed workflow.
         </p>
       </div>
 

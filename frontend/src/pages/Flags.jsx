@@ -180,7 +180,7 @@ export default function Flags() {
           <p className="eyebrow">Checkout Platform · prod</p>
           <h1 className="display mt-2 text-3xl text-ink md:text-4xl">Flags</h1>
           <p className="mt-2 text-ink-soft">
-            {flags.length} flags in this environment, evaluated in-process by the SDK.
+            {flags.length} flags in this environment, each with a state and rollout percentage.
           </p>
         </div>
         <button type="button" onClick={() => setShowCreate(true)} className="btn-accent py-2.5">

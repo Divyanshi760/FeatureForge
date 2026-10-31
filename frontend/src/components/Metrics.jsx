@@ -1,7 +1,7 @@
 const STATS = [
-  { value: 'Minutes', label: 'to catch and reverse a bad rollout, not hours' },
-  { value: '100%', label: 'Production changes captured in an immutable audit trail' },
-  { value: '4-eyes', label: 'Review enforced before any release flag reaches users' },
+  { value: '1 click', label: 'to reverse a risky rollout and disable the flag' },
+  { value: '100%', label: 'Flag changes captured in an append-only audit trail' },
+  { value: '2-reviewer', label: 'Sign-off enforced before a governed flag reaches users' },
 ]
 
 export default function Metrics() {
